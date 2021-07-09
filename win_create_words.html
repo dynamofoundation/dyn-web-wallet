@@ -1,0 +1,15 @@
+<div style="text-align: center;">Generate recovery seed</div>
+<p>This screen will generate your recovery seed, which is 12 words that will be used
+    to create your master private key.  These 12 words can be used to recover your wallet
+    in the event that you lose your password or don't have access to your wallet.  Your
+    12 word recovery phase cannot ever be recreated or restored.
+</p>
+<p>
+    The entropy (randomness) of your recovery phrase will be generated from your password, the 
+    current time and the picture that you draw below.
+</p>
+<div style="text-align: center;">
+<canvas id="entropyCanvas" width="300" height="300" style="border:2px solid;"></canvas>
+<br><br>
+<button type="button" id="cmdWinCreatePhraseCreate">Create Recovery Phrase</button>
+</div>

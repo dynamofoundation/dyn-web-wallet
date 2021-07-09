@@ -1,0 +1,24 @@
+{
+    "name" : "Dynamo Coin Web Wallet",
+    
+    "version" : "0.0.1",
+    
+    "description" : "Light web client non custodial wallet for Dynamo Coin",
+    
+    "manifest_version" : 3,
+    
+    "action" : {
+        "default_popup" : "main.html"
+    },
+
+    "web_accessible_resources": [{
+        "matches": ["<all_urls>"],
+        "resources": ["win_create_password.html"]
+    }],
+       
+    "permissions" : [
+        "storage",
+        "webRequest"
+    ]
+
+}
