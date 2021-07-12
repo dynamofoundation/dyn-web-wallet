@@ -21,7 +21,26 @@ function onLoad() {
     else
         loadWindow('win_create_password.html');
 
+
+        /*
+    var x = CryptoJS.SHA256('test');
+    alert(x);
+    */
+    const wif = 'KwDieuoz4S9kHeGCgjhw3L9G6EqbS3knZgn5XLSKCmpeDqnp5ozH';
+    const keyPair = Bitcoin.ECPair.fromWIF(wif);
+    
+    var address_p2wpkh = null;
+    var address_segwit_p2sh = null;
+    
+    {
+      const { address } = Bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey })
+      address_p2wpkh = address;
+    }
+
+    alert(address_p2wpkh);
 }
+
+
 
 function passwordExists() {
     return false;
