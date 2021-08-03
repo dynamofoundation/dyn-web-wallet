@@ -3,110 +3,12 @@
         <script type="text/javascript" src="crypto-js/crypto-js.js"></script>
         <script type="text/javascript" src="bitcoinjs.min.js"></script>        
         <script type="text/javascript" src = "jquery.min.js"></script>
-        <script type="text/javascript" src = "jquery-ui.min.js"></script>
-        <script type="text/javascript" src = "jsgrid.min.js"></script>
         <script type="text/javascript" src = "main.js"></script>
 
-        <link rel="stylesheet" href="jquery-ui.theme.min.css">    
-        <link rel="stylesheet" href="jquery-ui.min.css">    
-        <link type="text/css" rel="stylesheet" href="jsgrid.min.css" />
-        <link type="text/css" rel="stylesheet" href="jsgrid-theme.min.css" />
-
-        <style>
-body{
-	margin:0;
-	width:100%;
-	height:100vh;
-  	background:#ffffff;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-table {
-    font-size: 14px;
-}
-header{
-	width:100%; 
-	background:#ffffff; 
-	height:60px; 
-	line-height:60px;
-	border-bottom:1px solid #dddddd;
-}
-.hamburger{
-  background:none;
-  position:absolute;
-  top:0;
-  right:0;
-  line-height:45px;
-  padding:5px 15px 0px 15px;
-  color:#999;
-  border:0;
-  font-size:1.4em;
-  font-weight:bold;
-  cursor:pointer;
-  outline:none;
-  z-index:10000000000000;
-}
-.cross{
-  background:none;
-  position:absolute;
-  top:0px;
-  right:0;
-  padding:7px 15px 0px 15px;
-  color:#999;
-  border:0;
-  font-size:3em;
-  line-height:65px;
-  font-weight:bold;
-  cursor:pointer;
-  outline:none;
-  z-index:10000000000000;
-}
-.menu{z-index:1000000; font-weight:bold; font-size:0.8em; width:40%; background:#f1f1f1;  float:right; text-align:center; font-size:12px;}
-.menu ul {margin: 0; padding: 0; list-style-type: none; list-style-image: none;}
-.menu li {display: block;   padding:15px 0 15px 0; border-bottom:#dddddd 1px solid;}
-.menu li:hover{display: block;    background:#ffffff; padding:15px 0 15px 0; border-bottom:#dddddd 1px solid;}
-.menu ul li a { text-decoration:none;  margin: 0px; color:#666;}
-.menu ul li a:hover {  color: #666; text-decoration:none;}
-.menu a{text-decoration:none; color:#666;}
-.menu a:hover{text-decoration:none; color:#666;}
-
-.glyphicon-home{
-  color:white; 
-  font-size:1.5em; 
-  margin-top:5px; 
-  margin:0 auto;
-}
-
-span{padding-left:20px;}
-a{color:#336699;}
-        </style>
     </head>
-<body>
-
-<div style="width:520px;height:580px">
-
-    <header>
-        <span>Dynamo Coin web wallet v0.0.1</span>
-        <button class="hamburger">&#9776;</button>
-        <button class="cross">&#735;</button>
-      </header>
-      
-      <div class="menu">
-        <ul>
-          <a href="#"><li>Summary</li></a>
-          <a href="#"><li>Transactions</li></a>
-          <a href="#"><li>Send</li></a>
-          <a href="#"><li>Receive</li></a>
-          <a href="#"><li>Create NFT</li></a>
-          <a href="#"><li>Send NFT</li></a>
-          <a href="#"><li>Search NFT</li></a>
-        </ul>
-      </div> 
-
-      <div style="padding: 5px;font-size: 14px;" id="mainWindow">
-    </div>
-
-</div>
-
-</body>
+    <body style="border: 0;display: block;">
+      <canvas id="mainCanvas" height=3000 width=2000 style="display:none"></canvas>
+      <canvas id="stepCanvas" height=1500 width=1000 style="display:none"></canvas>
+      <canvas id="renderCanvas" style='position:absolute; left:0px; top:0px;margin: 0px;border: 0'></canvas>
+    </body>
 </html>
