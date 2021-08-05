@@ -1,20 +1,3 @@
-
-//Create words window local vars
-////////////////////////
-var canvasCTX;
-var canvasW;
-var canvasH;
-var canvas;
-var prevX;
-var currX;
-var prevY;
-var currY;
-var dot_flag = false;
-var flag = false;
-///////////////////////////
-
-
-
 var mainCanvas;
 var mainContext;
 
@@ -34,8 +17,12 @@ var canvasHeight;
 var aspect = 1.5;
 
 var imgLogo;
+var imgKeyboard;
 
 var windowLayout = new Object();
+var currentWindow;
+
+var keyboardButtonLocations = [];
 
 jQuery(onLoad);
 
@@ -44,7 +31,6 @@ function onLoad() {
 
     windowWidth = document.body.clientWidth;
     windowHeight = document.body.clientHeight;
-
 
     if (windowWidth > windowHeight) {
         canvasHeight = windowHeight;
@@ -76,29 +62,154 @@ function onLoad() {
 
     loadImages();
     loadWindowLayout()
+    initEventHandlers();
 
-    currentPage = "setupPage1";
+    currentWindow = windowLayout["setupPage1"];
 
     setTimeout( renderLoop, 500 );
 
 }
 
-function renderLoop() {
+function initEventHandlers() {
+    window.addEventListener("keyup", event_keypress);
+    renderCanvas.addEventListener("mouseup", event_mouseup);
+}
 
-    var win = windowLayout[currentPage];
+function event_keypress(event) {
+    processKeyEvent (event.key);
+}
 
-    drawBackground(win.title, false);
-    drawWindow(win.controls);
-    renderMainContext();
+function event_mouseup(event) {
+    processClickEvent (event.offsetX, event.offsetY);
+}
 
-    setTimeout( renderLoop, 100 );
+
+
+function processKeyEvent (keyCode) {
+    if (currentWindow.focus.length > 0) {
+        control = findControlByID (currentWindow.focus);
+        if (control.type == "textbox")
+            processTextboxKeypress (control, keyCode);
+    }
 
 }
 
-function drawWindow (controls) {
+function processClickEvent ( x, y ) {
+    var scaleX = 2000 / canvasWidth;
+    var scaleY = 3000 / canvasHeight;
+    var px = x * scaleX;
+    var py = y * scaleY;
 
-    for ( var i = 0; i < controls.length; i++) {
-        var control = controls[i];
+    var virtKeyClicked = false;
+    if (currentWindow.allowVirtKeyboard) {
+        if (currentWindow.keyboardVisible) {
+            if (py > 2150) {
+                virtKeyClicked = true;
+                processVirtKeyboardClick (px, py);
+            }
+        }
+    }
+
+    var control = null;
+    if (!virtKeyClicked)
+        control = findControlByXY ( px, py );
+
+    //if no control clicked, check the virtual keyboard expander
+    if (control == null) {
+        if (currentWindow.allowVirtKeyboard) {
+            if (currentWindow.keyboardVisible) {
+                if (pointInRect(px, py, 1630, 2000, imgKeyboard.width, imgKeyboard.height))
+                    currentWindow.keyboardVisible = false;
+            }
+            else {
+                if (pointInRect(px, py, 1630, 2800, imgKeyboard.width, imgKeyboard.height))
+                    currentWindow.keyboardVisible = true;
+            }
+        }
+    } else {
+        if (control.type == "textbox") {
+            currentWindow.focus = control.id;
+        }
+        else if (control.type == "button") {
+            functionName = currentWindow.id + "_" + control.id + "_click";
+            window[functionName]();
+        }
+    }
+
+}
+
+
+
+function findControlByID ( id ) {
+    var found = false;
+    var i = 0;
+    var result = "";
+    while ((!found) && (i < currentWindow.controls.length))
+        if (id == currentWindow.controls[i].id) {
+            found = true;
+            result = currentWindow.controls[i];
+        }
+        else
+            i++;
+
+    return result;
+
+}
+
+function findControlByXY (x, y) {
+
+    var found = false;
+    var i = 0;
+    while ((!found) && (i < currentWindow.controls.length)) {
+        var control = currentWindow.controls[i];
+
+        if (control.type == "textbox")
+            found = pointInTextbox (x, y, control);
+        else if (control.type == "button")
+            found = pointInButton (x, y, control);
+
+        if (!found)
+            i++;
+
+    }
+
+    if (found)
+        return currentWindow.controls[i];
+    else
+        return null;
+}
+
+function pointInRect (px, py, x, y, w, h) {
+    console.log ( px +", " + py +", " + x +", " + y +", " + w +", " + h);
+    return ( 
+        (px >= x) &&
+        (py >= y) && 
+        (px < x + w) && 
+        (py < y + h)
+    );
+}
+
+
+function renderLoop() {
+
+    drawBackground(currentWindow.title, false);
+    drawWindow();
+
+    if (currentWindow.allowVirtKeyboard) 
+        if (currentWindow.keyboardVisible) {
+            var control = findControlByID ("keyboard");            
+            drawKeyboard(control);
+        }
+
+    renderMainContext();
+
+    setTimeout( renderLoop, 100 );
+}
+
+function drawWindow () {
+
+    for ( var i = 0; i < currentWindow.controls.length; i++) {
+        var control = currentWindow.controls[i];
         if (control.type == "label")
             drawLabel (control);
         else if (control.type == "textbox")
@@ -106,24 +217,76 @@ function drawWindow (controls) {
         else if (control.type == "button")
             drawButton (control);
     }
-    
+
+    if (currentWindow.allowVirtKeyboard) {
+        if (currentWindow.keyboardVisible) {
+            mainContext.drawImage(imgKeyboard, 1630, 2000);
+        }
+        else {
+            mainContext.drawImage(imgKeyboard, 1630, 2800);
+        }
+    }
+
 }
 
+
+////////////////////////   Label
 function drawLabel (control) {
     mainContext.font = control.fontsize + 'px serif';
-    mainContext.fillStyle = control.color;
+    mainContext.fillStyle = control.fontcolor;
     mainContext.textAlign = control.align;
     mainContext.fillText (control.text, control.x, control.y );
 }
 
 
+////////////////////////   Textbox
 function drawTextbox ( control ) {
     mainContext.strokeStyle = "rgb(128, 128, 128)";
     mainContext.lineWidth = 5;
     mainContext.fillStyle = "rgb(200, 200, 200)";
-    roundRect(mainContext, control.x - (control.maxlen * 50) / 2, control.y, control.maxlen * 50, 150, 30, true, false);
+    roundRect(mainContext, control.x - control.w / 2, control.y, control.w, control.h, 30, true, false);
+
+    var textboxData = control.value;
+
+    //if this textbox has focus, blink the cursor
+    if (control.id == currentWindow.focus) {
+        if (Date.now() % 1000 < 500) {
+            textboxData = control.value + "|";
+        }
+    }
+
+    mainContext.font = control.fontsize + 'px serif';
+    mainContext.fillStyle = control.fontcolor;
+    mainContext.textAlign = "left";
+    mainContext.fillText ( textboxData, control.x - (control.w / 2) + control.texthorizoffset, control.y + control.textvertoffset );        
+
 }
 
+function processTextboxKeypress (control, key) {
+
+    if (key.length == 1)
+        control.value = control.value + key;
+    else if ( key == "Backspace" ) {
+        if (control.value.length > 0)
+            control.value = control.value.substring(0, control.value.length - 1);
+    }
+
+    else if ( key == "Enter" ) {
+    }
+
+    else {
+        alert(key);
+    }
+
+}
+
+function pointInTextbox ( x, y, control ) {
+    return pointInRect ( x, y, control.x - control.w / 2, control.y, control.w, control.h);
+}
+
+
+
+////////////////////////   Button
 
 function drawButton ( control ) {
     mainContext.strokeStyle = "rgb(128, 128, 128)";
@@ -137,8 +300,223 @@ function drawButton ( control ) {
 }
 
 
+function pointInButton ( x, y, control ) {
+    return pointInRect ( x, y, control.x - control.w / 2, control.y, control.w, control.h);
+}
 
 
+////////////////////////   Keyboard
+
+
+function drawKeyboard ( control ) {
+
+    var createLocations = false;
+    if (keyboardButtonLocations.length == 0)
+        createLocations = true;
+
+    const keys = [
+        ['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'],
+        ['1234567890','-/:;()$&@"',".,?!'"]
+    ];
+
+    width = 1800;
+    height = 800;
+    keyboardX = (2000 - width) / 2;
+    keyboardY = 2950 - height;
+    rowSpacing = 100;
+    rowHeight = (height - (rowSpacing * 4)) / 4;
+    buttonSpacing = 20;
+    buttonSize = (width - (buttonSpacing * 10)) / 10;
+
+    const rowXOffset = [
+        [0, 100, 290],
+        [0, 0, 200],        
+    ];
+
+
+    for ( var row = 0; row < 3; row++ ) {
+        var key = keys[control.mode][row];
+        var x = keyboardX + rowXOffset[control.mode][row];
+        var y = keyboardY + row * (rowHeight + rowSpacing);
+        for ( var col = 0; col < key.length; col++) {
+            mainContext.strokeStyle = "rgb(0, 0, 0)";
+            mainContext.lineWidth = 10;
+            mainContext.fillStyle = "rgb(240, 240, 240)";
+            roundRect(mainContext, x, y, buttonSize, buttonSize, 20, true, true);
+
+            mainContext.font = '96px serif';
+            mainContext.fillStyle = "black"
+            mainContext.textAlign = "center";
+            var buttonText;
+            if (control.shift)
+                buttonText = key.substring(col, col+1);
+            else
+                buttonText = key.substring(col, col+1).toLowerCase();
+            mainContext.fillText (buttonText, x + buttonSize / 2, y + buttonSize / 2 + 35 );
+
+            if (createLocations) {
+                var b = new Object();
+                b.x = x;
+                b.y = y;
+                b.w = buttonSize;
+                b.h = buttonSize;
+                b.text = buttonText;
+                keyboardButtonLocations.push (b);
+            }
+
+            x += buttonSize + buttonSpacing; 
+        }
+    }
+
+
+    //space
+    mainContext.strokeStyle = "rgb(0, 0, 0)";
+    mainContext.lineWidth = 10;
+    mainContext.fillStyle = "rgb(240, 240, 240)";
+    roundRect(mainContext, 500, keyboardY + 3 * (rowHeight + rowSpacing), 6 * buttonSize, buttonSize, 20, true, true);
+
+    mainContext.font = '96px serif';
+    mainContext.fillStyle = "black"
+    mainContext.textAlign = "center";
+    mainContext.fillText ("Space", 1000, keyboardY + 3 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
+
+    var b = new Object();
+    b.x = 500;
+    b.y = keyboardY + 3 * (rowHeight + rowSpacing);
+    b.w = 6 * buttonSize;
+    b.h = buttonSize;
+    b.text = ' ';
+    keyboardButtonLocations.push (b);
+
+
+    //mode
+    mainContext.strokeStyle = "rgb(0, 0, 0)";
+    mainContext.lineWidth = 10;
+    mainContext.fillStyle = "rgb(90, 90, 90)";
+    roundRect(mainContext, keyboardX, keyboardY + 3 * (rowHeight + rowSpacing), buttonSize, buttonSize, 20, true, true);
+
+    mainContext.font = '80px serif';
+    mainContext.fillStyle = "white"
+    mainContext.textAlign = "center";
+    mainContext.fillText ("123", keyboardX + buttonSize / 2, keyboardY + 3 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
+
+    var b = new Object();
+    b.x = keyboardX;
+    b.y = keyboardY + 3 * (rowHeight + rowSpacing);
+    b.w = buttonSize;
+    b.h = buttonSize;
+    b.text = 'mode';
+    keyboardButtonLocations.push (b);
+
+
+    //enter
+    mainContext.strokeStyle = "rgb(0, 0, 0)";
+    mainContext.lineWidth = 10;
+    mainContext.fillStyle = "rgb(64, 64, 255)";
+    roundRect(mainContext, keyboardX + width - buttonSize * 2, keyboardY + 3 * (rowHeight + rowSpacing), buttonSize * 2, buttonSize, 20, true, true);
+
+    mainContext.font = '80px serif';
+    mainContext.fillStyle = "white"
+    mainContext.textAlign = "center";
+    mainContext.fillText ("Enter", keyboardX + width - buttonSize, keyboardY + 3 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
+
+    var b = new Object();
+    b.x = keyboardX + width - buttonSize * 2;
+    b.y = keyboardY + 3 * (rowHeight + rowSpacing);
+    b.w = buttonSize * 2;
+    b.h = buttonSize;
+    b.text = 'enter';
+    keyboardButtonLocations.push (b);    
+
+    //shift
+    mainContext.strokeStyle = "rgb(0, 0, 0)";
+    mainContext.lineWidth = 10;
+    mainContext.fillStyle = "rgb(90, 90, 90)";
+    roundRect(mainContext, keyboardX, keyboardY + 2 * (rowHeight + rowSpacing), buttonSize, buttonSize, 20, true, true);
+
+    mainContext.font = '64px serif';
+    mainContext.fillStyle = "white"
+    mainContext.textAlign = "center";
+    mainContext.fillText ("shift", keyboardX + buttonSize / 2, keyboardY + 2 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
+
+    var b = new Object();
+    b.x = keyboardX;
+    b.y = keyboardY + 2 * (rowHeight + rowSpacing);
+    b.w = buttonSize;
+    b.h = buttonSize;
+    b.text = 'shift';
+    keyboardButtonLocations.push (b);      
+
+    //backspace
+    mainContext.strokeStyle = "rgb(0, 0, 0)";
+    mainContext.lineWidth = 10;
+    mainContext.fillStyle = "rgb(90, 90, 90)";
+    roundRect(mainContext, keyboardX + width - buttonSize, keyboardY + 2 * (rowHeight + rowSpacing), buttonSize, buttonSize, 20, true, true);
+
+    mainContext.font = '80px serif';
+    mainContext.fillStyle = "white"
+    mainContext.textAlign = "center";
+    mainContext.fillText ("<-", keyboardX + width - buttonSize + buttonSize / 2, keyboardY + 2 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
+    
+    var b = new Object();
+    b.x = keyboardX + width - buttonSize;
+    b.y = keyboardY + 2 * (rowHeight + rowSpacing);
+    b.w = buttonSize;
+    b.h = buttonSize;
+    b.text = 'backspace';
+    keyboardButtonLocations.push (b);      
+
+
+}
+
+
+
+function processVirtKeyboardClick (x, y) {
+
+    var textChar = 'QWERTYUIOPASDFGHJKLZXCVBNM';
+    var symChar = '1234567890-/:;()$&@"' + "',.,?!";
+
+    var found = false;
+    var i = 0;
+    while ((!found) && (i < keyboardButtonLocations.length))
+        if (pointInRect (x, y, keyboardButtonLocations[i].x, keyboardButtonLocations[i].y, keyboardButtonLocations[i].w, keyboardButtonLocations[i].h))
+            found = true;
+        else
+            i++;
+
+    alert(found);
+    if (found) {
+        var t = keyboardButtonLocations[i].text;
+        if (t == "shift") {
+
+        }
+        else if (t == "mode") {
+
+        }
+        else if (t == "enter") {
+
+        }
+        else if (t == "backspace") {
+
+        }
+        else {
+            var control = findControlByID ("keyboard");
+            if (control.mode == 1) {
+                var j = textChar.indexOf(t);
+                if (j != -1)
+                    t = symChar.charAt(j);
+            }
+            if (control.shift)
+                t = t.toUpperCase();
+
+        }
+
+
+        console.log(t);
+
+    }
+
+}
 
 function renderMainContext() {
     renderContext.imageSmoothingEnabled = true;
@@ -181,6 +559,10 @@ function drawBackground(windowTitle, enableMenu) {
 function loadImages() {
     imgLogo = new Image();
     imgLogo.src = "./images/logo_transparent200.png"
+
+    imgKeyboard = new Image();
+    imgKeyboard.src = "./images/keyboard.png"
+
 }
 
 function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
@@ -216,72 +598,33 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
       ctx.stroke();
     }
   
-  }
-
-
-    /*
-    setupMenu();
-    
-    if (passwordExists())
-        loadWindow('win_enter_password.html');
-    else
-        loadWindow('win_create_password.html');
-
-
-    localStorage.clear();
-
-        /*
-    alert(localStorage.getItem("fred"));
-
-    localStorage.setItem("fred", "frank");
-    */
-
-
-        /*
-    var x = CryptoJS.SHA256('test');
-    alert(x);
-    */
-
-    /*
-    const wif = 'KwDieuoz4S9kHeGCgjhw3L9G6EqbS3knZgn5XLSKCmpeDqnp5ozH';
-    const keyPair = Bitcoin.ECPair.fromWIF(wif);
-    
-    var address_p2wpkh = null;
-    var address_segwit_p2sh = null;
-    
-    {
-      const { address } = Bitcoin.payments.p2wpkh({ pubkey: keyPair.publicKey })
-      address_p2wpkh = address;
-    }
-
-    alert(address_p2wpkh);
-    */
-
-
-
-function passwordExists() {
-    return false;
 }
- 
+
 
 
 function loadWindowLayout() {
 
     windowLayout['setupPage1'] = {
-        "title" : "Dynamo Coin Wallet Setup",
-        "controls" : [
-            { type : "label", x : 1000, y: 450, fontsize : "128", color : "white", align : "center", text : "Create Wallet Password"},
-            { type : "label", x : 1000, y: 600, fontsize : "80", color : "white", align : "center", text : "Enter a password that is easy to remember,"},
-            { type: "label", x : 1000, y: 700, fontsize : "80", color : "white", align : "center", text : "but hard to guess.  This password will be used"},
-            { type : "label", x : 1000, y: 800, fontsize : "80", color : "white", align : "center", text : "to unlock your wallet.  If you lose your password,"},
-            { type : "label", x : 1000, y: 900, fontsize : "80", color : "white", align : "center", text : "it cannot be recovered by any means."},
-            { type : "label", x : 1000, y: 1200, fontsize : "80", color : "white", align : "center", text : "Enter password"},
-            { type : "label", x : 1000, y: 1600, fontsize : "80", color : "white", align : "center", text : "Re-enter password"},
+        title: "Dynamo Coin Wallet Setup",
+        focus: "txtPassword1",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winSetupPage1",
+        controls : [
+            { type : "label", x : 1000, y: 450, fontsize : "128", fontcolor : "white", align : "center", text : "Create Wallet Password"},
+            { type : "label", x : 1000, y: 600, fontsize : "80", fontcolor : "white", align : "center", text : "Enter a password that is easy to remember,"},
+            { type: "label", x : 1000, y: 700, fontsize : "80", fontcolor : "white", align : "center", text : "but hard to guess.  This password will be used"},
+            { type : "label", x : 1000, y: 800, fontsize : "80", fontcolor : "white", align : "center", text : "to unlock your wallet.  If you lose your password,"},
+            { type : "label", x : 1000, y: 900, fontsize : "80", fontcolor : "white", align : "center", text : "it cannot be recovered by any means."},
+            { type : "label", x : 1000, y: 1200, fontsize : "80", fontcolor : "white", align : "center", text : "Enter password"},
+            { type : "label", x : 1000, y: 1600, fontsize : "80", fontcolor : "white", align : "center", text : "Re-enter password"},
 
-            { type : "textbox", id: "txtPassword1", x : 1000, y: 1300, maxlen: 16, mask: true, value: "" },
-            { type : "textbox", id: "txtPassword2", x : 1000, y: 1700, maxlen: 16, mask: true, value: "" },
+            { type : "textbox", id: "txtPassword1", x : 1000, y: 1300, w: 640, h: 150, fontsize : "80", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, value: "" },
+            { type : "textbox", id: "txtPassword2", x : 1000, y: 1700, w: 640, h: 150, fontsize : "80", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, value: "" },
 
-            { type : "button", id: "cmdNext", x: 1000, y: 2100, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"}            
+            { type : "button", id: "cmdNext", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false }
             
         ]
     };
@@ -289,227 +632,5 @@ function loadWindowLayout() {
 }
 
 
-
-
-
-
-/*
-async function loadWindow(windowName) {
-    var url = chrome.runtime.getURL(windowName);
-    document.getElementById("mainWindow").innerHTML = await (await fetch(url)).text();
-
-    if (windowName == 'win_create_password.html') {
-        $('input').addClass("ui-corner-all");
-        $('button').button();
-        $("#cmdEnterPassword").click(win_create_password_cmdEnterPassword_click);
-    }
-
-    else if (windowName == 'win_create_words.html') {
-        initCreateWordsCanvas();
-        $("#cmdWinCreatePhraseCreate").click(win_create_phrase_cmdWinCreatePhraseCreate_click);
-    }
-
-    else if (windowName == 'win_view_recovery_words.html') {
-        canvas = document.getElementById('wordCanvas');
-        canvasCTX = canvas.getContext("2d");
-        canvasCTX.fillStyle = "#101010";
-        canvasCTX.fillRect(0, 0, 300, 200);
-        $("#cmdWinViewRecoveryReveal").click(win_view_phrase_cmdWinViewRecoveryReveal_click);
-        $("#cmdWinViewRecoveryProceed").click(win_view_phrase_cmdWinViewRecoveryProceed_click);
-    }
-
-    else if (windowName == "win_verify_words.html") {
-        $("#cmdVerifyProceed").click(win_verify_phrase_cmdVerifyProceed_click);
-    }
-
-    else if (windowName == "win_summary.html") {
-        loadSummaryData();
-    }
-
-    
-
+function winSetupPage1_cmdNext_click() {
 }
-
-function win_create_password_cmdEnterPassword_click() {
-    loadWindow('win_create_words.html');
-}
-
-function win_create_phrase_cmdWinCreatePhraseCreate_click() {
-    loadWindow('win_view_recovery_words.html');
-}
-
-function win_view_phrase_cmdWinViewRecoveryReveal_click() {
-    canvas = document.getElementById('wordCanvas');
-    canvasCTX = canvas.getContext("2d");
-
-    canvasCTX.fillStyle = "#FEFEFE";
-    canvasCTX.font = "20px Arial";
-    for ( var i = 0; i < 12; i++) {
-        var x, y;
-        if (i < 6)
-            x = 10;
-        else
-            x = 150;
-        y = (i % 6) * 30 + 30;
-        canvasCTX.fillText("Word1", x, y);
-    }
-
-
-}
-
-function win_view_phrase_cmdWinViewRecoveryProceed_click() {
-    loadWindow('win_verify_words.html');
-}
-
-
-function win_verify_phrase_cmdVerifyProceed_click() {
-    loadWindow('win_summary.html');
-}
-
-function initCreateWordsCanvas() {
-    canvas = document.getElementById('entropyCanvas');
-    canvasCTX = canvas.getContext("2d");
-    canvasW = canvas.width;
-    canvasH = canvas.height;
-    dot_flag = false;
-    flag = false;
-
-    canvas.addEventListener("mousemove", function (e) {
-        findxyCreateWordsCanvas('move', e)
-    }, false);
-    canvas.addEventListener("mousedown", function (e) {
-        findxyCreateWordsCanvas('down', e)
-    }, false);
-    canvas.addEventListener("mouseup", function (e) {
-        findxyCreateWordsCanvas('up', e)
-    }, false);
-    canvas.addEventListener("mouseout", function (e) {
-        findxyCreateWordsCanvas('out', e)
-    }, false);
-}
-
-function drawCreateWordsCanvas() {
-    canvasCTX.beginPath();
-    canvasCTX.moveTo(prevX, prevY);
-    canvasCTX.lineTo(currX, currY);
-    canvasCTX.strokeStyle = 'black';
-    canvasCTX.lineWidth = 3;
-    canvasCTX.stroke();
-    canvasCTX.closePath();
-}
-
-function findxyCreateWordsCanvas(res, e) {
-    if (res == 'down') {
-        prevX = currX;
-        prevY = currY;
-        currX = e.clientX - canvas.offsetLeft;
-        currY = e.clientY - canvas.offsetTop;
-
-        flag = true;
-        dot_flag = true;
-        if (dot_flag) {
-            canvasCTX.beginPath();
-            canvasCTX.fillStyle = 2;
-            canvasCTX.fillRect(currX, currY, 2, 2);
-            canvasCTX.closePath();
-            dot_flag = false;
-        }
-    }
-    if (res == 'up' || res == "out") {
-        flag = false;
-    }
-    if (res == 'move') {
-        if (flag) {
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX - canvas.offsetLeft;
-            currY = e.clientY - canvas.offsetTop;
-            drawCreateWordsCanvas();
-        }
-    }
-}
-
-
-function loadSummaryData() {
-    var transactions = [
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 },
-        { "Date": "2021-07-04 13:45:10", "Address": "dy10000000002300000000", "Action": "Send", "Amount": 1.23456 }
-    ];
- 
- 
-    $("#summaryTransactionGrid").jsGrid({
-        width: "100%",
-        height: "300px",
- 
-        inserting: false,
-        editing: false,
-        sorting: true,
-        paging: true,
- 
-        data: transactions,
- 
-        fields: [
-            { name: "Date", type: "text", width: 50  },
-            { name: "Address", type: "text", width: 100 },
-            { name: "Action", type: "text", width: 50 },
-            { name: "Amount", type: "number", width: 50 }
-        ]
-    });
-}
-
-
-function setupMenu() {
-
-    $( ".cross" ).hide();
-    $( ".menu" ).hide();
-    $( ".hamburger" ).click(function() {
-    $( ".menu" ).slideToggle( "slow", function() {
-    $( ".hamburger" ).hide();
-    $( ".cross" ).show();
-    });
-    });
-    
-    $( ".cross" ).click(function() {
-    $( ".menu" ).slideToggle( "slow", function() {
-    $( ".cross" ).hide();
-    $( ".hamburger" ).show();
-    });
-    });
-    
-}
-
-function x() {
-
-    
-    chrome.storage.sync.get(['data'], (result) => {
-        this.data.innerHTML = result.data;
-    });
-
-
-    chrome.runtime.onInstalled.addListener(() => {
-        chrome.storage.sync.set (
-            {
-                data : "hi"
-            },
-            () => {} 
-        );
-    });
-    
-    data = "hi";
-    
-    chrome.storage.sync.get([
-        'data'
-    ], (result) => {
-        data = result.data;
-    });
-    
-
-}
-*/
