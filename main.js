@@ -31,10 +31,72 @@ var msgboxTitle;
 var globalVars;
 
 var menuExpanded;
+var menuItemLocations = [];
 
 jQuery(onLoad);
 
+
 function onLoad() {
+
+    /*
+    var stuff = CryptoJS.SHA256("abcd");
+
+    const mnemonic = DynWallet.bip39.generateMnemonic();
+    console.log(mnemonic);
+*/
+    var dest = DynWallet.bech32.bech32.decode('dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef');
+
+
+    /*
+    var child = node.derivePath("m/0'/0'/0'");
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: child.publicKey, network});
+    console.log(script);
+    var addr = script.address;
+    console.log(addr);
+*/
+
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+
+    const hdRoot = DynWallet.bip32.fromBase58('');
+    const masterFingerprint = hdRoot.fingerprint;
+    const path = "m/0'/0'/3'";
+    const node = hdRoot.derivePath(path);
+    const pubkey = node.publicKey;
+
+    const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(node.publicKey, { network: network });
+    const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
+
+    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: node.publicKey, network});
+    console.log(script.address);
+
+    const p2sh = DynWallet.bitcoin.payments.p2sh({
+        redeem: DynWallet.bitcoin.payments.p2wpkh({ pubkey: node.publicKey, network }),
+        network
+      });
+
+    var psbt = new DynWallet.bitcoin.Psbt();
+
+    psbt.addOutput ( {address: 'dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef', value : 24000000});
+
+    psbt.addInput ( {
+        hash: 'ef3ffe45fbe913c138467b9a101fe5c24682cfbb6ea2c59ddd499e5221e31b0b',
+        index: 0,
+        //redeemScript: p2sh.redeem.output,
+        witnessUtxo: {
+          script: p2wpkh.output,
+          value: 24316921,
+        }
+    } );
+
+    psbt.signInput(0, node);
+    psbt.validateSignaturesOfInput(0, node.publicKey);
+    psbt.finalizeAllInputs();
+
+    const tx = psbt.extractTransaction();
+    console.log(tx.toHex());
 
 
     windowWidth = document.body.clientWidth;
@@ -130,6 +192,10 @@ function processClickEvent ( x, y ) {
     if (currentWindow.hambugerMenu) {
         if (pointInRect (px, py, 80, 70, 180, 180 )) {
             menuExpanded = !menuExpanded;
+            return;
+        }
+        if (menuExpanded) {
+            processClickMenu (px, py);
             return;
         }
     }
@@ -243,14 +309,17 @@ function renderLoop() {
             drawKeyboard(control);
         }
 
-    if (currentWindow.hambugerMenu) {
-        drawMenu();
-    }
 
-    if (msgboxVisible) {
+    if ((msgboxVisible) || (menuExpanded)) {
         mainContext.fillStyle = "rgba(64, 64, 64, 0.6)";
         mainContext.fillRect(50, 50, 1900, 2900);        
-        drawMessagebox();
+
+        if (msgboxVisible)
+            drawMessagebox();
+    }
+
+    if (currentWindow.hambugerMenu) {
+        drawMenu();
     }
 
     renderMainContext();
@@ -362,6 +431,12 @@ function drawMenu() {
             mainContext.lineTo(1080, 500 + i * 250);
             mainContext.closePath();
             mainContext.stroke();
+            var location = new Object();
+            location.x = 80;
+            location.y = 250 + i * 250;
+            location.w = 1000;
+            location.h = 250;
+            menuItemLocations[i] = location;
         }
 
     }
@@ -381,6 +456,25 @@ function drawMenu() {
         }
     }
 
+
+}
+
+
+function processClickMenu (px, py) {
+
+    var found = false;
+    var i = 0;
+    while ((!found) && (i < menuItemLocations.length))
+        if (pointInRect(px, py, menuItemLocations[i].x, menuItemLocations[i].y, menuItemLocations[i].w, menuItemLocations[i].h ))
+            found = true;
+        else
+            i++;
+
+    if (found) {
+        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft"];
+        currentWindow = windowLayout[windows[i]];
+        menuExpanded = false;
+    }
 
 }
 
@@ -1052,6 +1146,78 @@ function loadWindowLayout() {
         ]
     };
 
+
+    windowLayout['transactions'] = {
+        title: "Transaction history",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winTransactionHistory",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };
+
+
+    windowLayout['send'] = {
+        title: "Send Dynamo",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winSend",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };
+
+    windowLayout['receive'] = {
+        title: "Receive Dynamo",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winReceive",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };
+
+
+    windowLayout['createnft'] = {
+        title: "Create NFT",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winCreateNFT",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };
+
+    windowLayout['sendnft'] = {
+        title: "Send NFT",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winSendNFT",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };
+
+
+    windowLayout['searchnft'] = {
+        title: "Search For NFT",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winSearchNFT",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };
+
+
+
 }
 
 
@@ -1064,8 +1230,10 @@ function winSetupPage1_cmdNext_click() {
         Msgbox ("Validation", "Password cannot be empty");
     else if (txtPass1.value != txtPass2.value)
         Msgbox ("Validation", "Passwords do not match");
-    else
+    else {
+        globalVars.passwordHash = CryptoJS.SHA256(txtPass1.value);
         currentWindow = windowLayout["setupPage2"];
+    }
 }
 
 function winSetupPage2_cmdNext_click() {
@@ -1073,8 +1241,10 @@ function winSetupPage2_cmdNext_click() {
     var drawing = findControlByID("drawing");
     if (drawing.points.length < 10)
         Msgbox ("Validation", "Please click at least 10 times");
-    else
+    else {
+        //globalVars.randomNum 
         currentWindow = windowLayout["setupPage3"];
+    }
 }
 
 function winSetupPage3_cmdReveal_click() {
