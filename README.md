@@ -1,2 +1,2 @@
 # dyn-web-wallet
- Dynamo Chrome extension wallet
+ Dynamo pure javascript wallet
