@@ -33,10 +33,15 @@ var globalVars;
 var menuExpanded;
 var menuItemLocations = [];
 
+var globalVars = new Object();
+
 jQuery(onLoad);
 
 
 function onLoad() {
+
+
+
 
     /*
     var stuff = CryptoJS.SHA256("abcd");
@@ -44,7 +49,6 @@ function onLoad() {
     const mnemonic = DynWallet.bip39.generateMnemonic();
     console.log(mnemonic);
 */
-    var dest = DynWallet.bech32.bech32.decode('dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef');
 
 
     /*
@@ -58,7 +62,11 @@ function onLoad() {
 */
 
 
+
+/*
     var network = DynWallet.bitcoin.networks.bitcoin;
+
+    var dest = DynWallet.bech32.bech32.decode('dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef');
 
     const hdRoot = DynWallet.bip32.fromBase58('');
     const masterFingerprint = hdRoot.fingerprint;
@@ -97,7 +105,7 @@ function onLoad() {
 
     const tx = psbt.extractTransaction();
     console.log(tx.toHex());
-
+*/
 
     windowWidth = document.body.clientWidth;
     windowHeight = document.body.clientHeight;
@@ -134,7 +142,7 @@ function onLoad() {
     loadWindowLayout()
     initEventHandlers();
 
-    currentWindow = windowLayout["summary"];
+    currentWindow = windowLayout["setupPage1"];
 
     setTimeout( renderLoop, 500 );
 
@@ -1242,7 +1250,37 @@ function winSetupPage2_cmdNext_click() {
     if (drawing.points.length < 10)
         Msgbox ("Validation", "Please click at least 10 times");
     else {
-        //globalVars.randomNum 
+        var hash1 = CryptoJS.SHA256("a" + Date.now());
+
+        var imgData = mainContext.getImageData(drawing.x, drawing.y, drawing.h, drawing.w);
+
+        var imgStr = "";
+        for ( var i = 0; i < imgData.length; i++)
+            imgStr += imgData[i];
+        
+        var hash2 = CryptoJS.SHA256(imgStr);
+
+        drawEntropy = hash1.words.concat(hash2.words).concat(globalVars.passwordHash.words);
+
+        var strEntropy = "";
+        for ( var i = 0; i < drawEntropy.length; i++)
+            strEntropy += Math.abs(drawEntropy[i]).toString(16);
+
+        var finalHash = CryptoJS.SHA256(strEntropy);            
+
+        var hexFinalHash = "";
+        for ( var i = 0; i < 4; i++) {
+            var hexStr = Math.abs(finalHash.words[i]).toString(16);
+            while (hexStr.length < 8)
+                hexStr = '0' + hexStr;
+            hexFinalHash += hexStr;
+        }
+
+        const mnemonic = DynWallet.bip39.entropyToMnemonic(hexFinalHash);
+        console.log(mnemonic);
+
+        console.log(DynWallet.bip39.mnemonicToSeedSync(mnemonic).toString('hex'));
+                
         currentWindow = windowLayout["setupPage3"];
     }
 }
