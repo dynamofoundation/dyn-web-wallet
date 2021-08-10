@@ -38,74 +38,10 @@ var globalVars = new Object();
 jQuery(onLoad);
 
 
+
 function onLoad() {
 
 
-
-
-    /*
-    var stuff = CryptoJS.SHA256("abcd");
-
-    const mnemonic = DynWallet.bip39.generateMnemonic();
-    console.log(mnemonic);
-*/
-
-
-    /*
-    var child = node.derivePath("m/0'/0'/0'");
-
-    var network = DynWallet.bitcoin.networks.bitcoin;
-    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: child.publicKey, network});
-    console.log(script);
-    var addr = script.address;
-    console.log(addr);
-*/
-
-
-
-/*
-    var network = DynWallet.bitcoin.networks.bitcoin;
-
-    var dest = DynWallet.bech32.bech32.decode('dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef');
-
-    const hdRoot = DynWallet.bip32.fromBase58('');
-    const masterFingerprint = hdRoot.fingerprint;
-    const path = "m/0'/0'/3'";
-    const node = hdRoot.derivePath(path);
-    const pubkey = node.publicKey;
-
-    const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(node.publicKey, { network: network });
-    const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
-
-    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: node.publicKey, network});
-    console.log(script.address);
-
-    const p2sh = DynWallet.bitcoin.payments.p2sh({
-        redeem: DynWallet.bitcoin.payments.p2wpkh({ pubkey: node.publicKey, network }),
-        network
-      });
-
-    var psbt = new DynWallet.bitcoin.Psbt();
-
-    psbt.addOutput ( {address: 'dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef', value : 24000000});
-
-    psbt.addInput ( {
-        hash: 'ef3ffe45fbe913c138467b9a101fe5c24682cfbb6ea2c59ddd499e5221e31b0b',
-        index: 0,
-        //redeemScript: p2sh.redeem.output,
-        witnessUtxo: {
-          script: p2wpkh.output,
-          value: 24316921,
-        }
-    } );
-
-    psbt.signInput(0, node);
-    psbt.validateSignaturesOfInput(0, node.publicKey);
-    psbt.finalizeAllInputs();
-
-    const tx = psbt.extractTransaction();
-    console.log(tx.toHex());
-*/
 
     windowWidth = document.body.clientWidth;
     windowHeight = document.body.clientHeight;
@@ -142,7 +78,15 @@ function onLoad() {
     loadWindowLayout()
     initEventHandlers();
 
-    currentWindow = windowLayout["setupPage1"];
+    currentWindow = windowLayout["welcome"];
+
+    
+    var storage = window.localStorage;
+    if (storage.getItem ('xprv') === null)
+        currentWindow = windowLayout["welcome"];
+    else
+        currentWindow = windowLayout["login"];
+
 
     setTimeout( renderLoop, 500 );
 
@@ -307,6 +251,7 @@ function pointInRect (px, py, x, y, w, h) {
 
 
 function renderLoop() {
+
 
     drawBackground(currentWindow.title, false);
     drawWindow();
@@ -988,6 +933,86 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 
 function loadWindowLayout() {
 
+
+    windowLayout['login'] = {
+        title: "Dynamo Coin Wallet",
+        focus: "txtPassword",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winLogin",
+        hambugerMenu: false,
+        controls : [
+            { type : "label", x : 1000, y: 450, fontsize : "128", fontcolor : "white", align : "center", text : "Enter Wallet Password"},
+            { type : "label", x : 1000, y: 600, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to unlock the wallet."},
+
+            { type : "textbox", id: "txtPassword", x : 1000, y: 800, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, value: "" },
+
+            { type : "button", id: "cmdDone", x: 1000, y: 1200, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false }
+            
+        ]
+    };
+
+
+    windowLayout['welcome'] = {
+        title: "Welcome to Dynamo!",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winWelcome",
+        hambugerMenu: false,
+        controls : [
+            { type : "label", x : 1000, y: 450, fontsize : "128", fontcolor : "white", align : "center", text : "Wallet Wizard"},
+            { type : "label", x : 1000, y: 600, fontsize : "80", fontcolor : "white", align : "center", text : "You can either setup a new wallet or import"},
+            { type: "label", x : 1000, y: 700, fontsize : "80", fontcolor : "white", align : "center", text : "an existing wallet.  Select your choice below."},
+
+
+            { type : "button", id: "cmdCreate", x: 1000, y: 1000, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create New Wallet"},
+            { type : "button", id: "cmdImport", x: 1000, y: 1200, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Import Existing Wallet"}
+
+            
+        ]
+    };
+
+    windowLayout['import'] = {
+        title: "Import Dynamo Wallet",
+        focus: "",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winImport",
+        hambugerMenu: false,
+        controls : [
+            { type : "label", x : 1000, y: 450, fontsize : "128", fontcolor : "white", align : "center", text : "Import Wallet"},
+            { type : "label", x : 70, y: 600, fontsize : "80", fontcolor : "white", align : "left", text : "Enter 12 word recovery phrase:"},
+
+            { type : "label", x : 70, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : "Words 1 to 6"},
+
+            { type : "textbox", id: "word0", x : 70, y: 830, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word1", x : 70, y: 980, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word2", x : 70, y: 1130, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word3", x : 70, y: 1280, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word4", x : 70, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word5", x : 70, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+
+            { type : "label", x : 1000, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : "Words 7 to 12"},
+
+            { type : "textbox", id: "word6", x : 1000, y: 830, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word7", x : 1000, y: 980, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word8", x : 1000, y: 1130, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word9", x : 1000, y: 1280, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word10", x : 1000, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word11", x : 1000, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+
+            { type : "button", id: "cmdDone", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false }
+
+            
+        ]
+    };
+
+
     windowLayout['setupPage1'] = {
         title: "Dynamo Coin Setup (1 of 4)",
         focus: "txtPassword1",
@@ -1060,20 +1085,20 @@ function loadWindowLayout() {
             { type : "label", x : 1000, y: 1100, fontsize : "80", fontcolor : "white", align : "center", text : "THIS RECOVERY PHRASE ALLOWS ACCESS"},
             { type : "label", x : 1000, y: 1200, fontsize : "80", fontcolor : "white", align : "center", text : "TO ALL OF YOUR COINS!"},
 
-            { type : "label", id: "word1", x : 500, y: 1750, fontsize : "80", fontcolor : "white", align : "center", text : "abandon"},
-            { type : "label", id: "word2", x : 500, y: 2000, fontsize : "80", fontcolor : "white", align : "center", text : "because"},
-            { type : "label", id: "word3", x : 500, y: 2250, fontsize : "80", fontcolor : "white", align : "center", text : "blossom"},
-            { type : "label", id: "word4", x : 500, y: 2500, fontsize : "80", fontcolor : "white", align : "center", text : "category"},
+            { type : "label", id: "word0", x : 500, y: 1750, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word1", x : 500, y: 2000, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word2", x : 500, y: 2250, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word3", x : 500, y: 2500, fontsize : "80", fontcolor : "white", align : "center", text : ""},
 
-            { type : "label", id: "word5", x : 1000, y: 1750, fontsize : "80", fontcolor : "white", align : "center", text : "elephant"},
-            { type : "label", id: "word6", x : 1000, y: 2000, fontsize : "80", fontcolor : "white", align : "center", text : "favorite"},
-            { type : "label", id: "word7", x : 1000, y: 2250, fontsize : "80", fontcolor : "white", align : "center", text : "license"},
-            { type : "label", id: "word8", x : 1000, y: 2500, fontsize : "80", fontcolor : "white", align : "center", text : "midnight"},
+            { type : "label", id: "word4", x : 1000, y: 1750, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word5", x : 1000, y: 2000, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word6", x : 1000, y: 2250, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word7", x : 1000, y: 2500, fontsize : "80", fontcolor : "white", align : "center", text : ""},
 
-            { type : "label", id: "word9", x : 1500, y: 1750, fontsize : "80", fontcolor : "white", align : "center", text : "ordinary"},
-            { type : "label", id: "word10", x : 1500, y: 2000, fontsize : "80", fontcolor : "white", align : "center", text : "possible"},
-            { type : "label", id: "word11", x : 1500, y: 2250, fontsize : "80", fontcolor : "white", align : "center", text : "response"},
-            { type : "label", id: "word12", x : 1500, y: 2500, fontsize : "80", fontcolor : "white", align : "center", text : "wrestle"},
+            { type : "label", id: "word8", x : 1500, y: 1750, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word9", x : 1500, y: 2000, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word10", x : 1500, y: 2250, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+            { type : "label", id: "word11", x : 1500, y: 2500, fontsize : "80", fontcolor : "white", align : "center", text : ""},
 
 
             { type : "label", id: "", x : 500, y: 1650, fontsize : "80", fontcolor : "white", align : "center", text : "WORD 1"},
@@ -1145,11 +1170,11 @@ function loadWindowLayout() {
         id: "winSummary",
         hambugerMenu: true,
         controls : [
-            { type : "label", id: "address",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Address: dy123456789abcdefg"},
-            { type : "label", id: "balance",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "Balance: 2.45000000 DYN"},
-            { type : "label", id: "unconfirmed", x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Unconfirmed Balance: 0.30000000 DYN"},
+            { type : "label", id: "address",  x : 100, y: 450, fontsize : "64", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "balance",  x : 100, y: 750, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "unconfirmed", x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             
-            { type : "button", id: "cmdCopyAddress", x: 1500, y: 350, w: 300, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Copy"}
+            { type : "button", id: "cmdCopyAddress", x: 1700, y: 350, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Copy"}
 
         ]
     };
@@ -1229,6 +1254,77 @@ function loadWindowLayout() {
 }
 
 
+
+
+function winWelcome_cmdCreate_click() {
+    currentWindow = windowLayout["setupPage1"];
+}
+
+function winWelcome_cmdImport_click() {
+    currentWindow = windowLayout["import"];
+}
+
+function winImport_cmdDone_click() {
+    
+    var controls = [];
+    for ( var i = 0; i < 12; i++)
+        controls[i] = findControlByID("word" + i);
+    
+    var ok = true;
+    for ( var i = 0; i < 12; i++)
+        if (controls[i].value.length == 0)    
+            ok = false;
+
+    if (!ok) {
+        Msgbox ("Validation", "Please enter all 12 words");
+        return;
+    }
+
+    var mnemonic = "";
+    for ( var i = 0; i < 12; i++)
+        mnemonic += controls[i].value + " ";
+    
+    mnemonic = mnemonic.trim();
+
+    if (!DynWallet.bip39.validateMnemonic(mnemonic)) {
+        Msgbox ("Validation", "Incorrect 12 word seed phrase");
+        return;
+    }
+
+    var masterSeed = DynWallet.bip39.mnemonicToSeedSync(mnemonic);
+    var node = DynWallet.bip32.fromSeed(masterSeed);
+    globalVars.xprv = node.toBase58();
+
+    currentWindow = windowLayout["summary"];
+    loadSummary();
+
+}
+
+
+function winLogin_cmdDone_click() {
+
+    var txtPass = findControlByID("txtPassword").value;
+
+    var localStorage = window.localStorage;
+    var encryptedKey = localStorage.getItem("xprv");
+
+    var xprv = "";
+    try {
+        xprv = decryptAES256 (encryptedKey, txtPass).toString(CryptoJS.enc.Utf8);
+    }
+    catch(err) {        
+    }
+
+    if (xprv.startsWith("xprv")) {
+        currentWindow = windowLayout["summary"];
+        loadSummary();    
+    }
+    else 
+        Msgbox ("Security", "Incorrect password");
+
+
+}
+
 function winSetupPage1_cmdNext_click() {
 
     var txtPass1 = findControlByID("txtPassword1");
@@ -1239,6 +1335,7 @@ function winSetupPage1_cmdNext_click() {
     else if (txtPass1.value != txtPass2.value)
         Msgbox ("Validation", "Passwords do not match");
     else {
+        globalVars.plaintextPassword = txtPass1.value;
         globalVars.passwordHash = CryptoJS.SHA256(txtPass1.value);
         currentWindow = windowLayout["setupPage2"];
     }
@@ -1255,12 +1352,14 @@ function winSetupPage2_cmdNext_click() {
         var imgData = mainContext.getImageData(drawing.x, drawing.y, drawing.h, drawing.w);
 
         var imgStr = "";
-        for ( var i = 0; i < imgData.length; i++)
-            imgStr += imgData[i];
+        for ( var i = 0; i < imgData.data.length; i++)
+            imgStr += imgData.data[i];
         
         var hash2 = CryptoJS.SHA256(imgStr);
 
-        drawEntropy = hash1.words.concat(hash2.words).concat(globalVars.passwordHash.words);
+        var hash3 = CryptoJS.SHA256(globalVars.plaintextPassword);
+
+        drawEntropy = hash1.words.concat(hash2.words).concat(hash3.words);
 
         var strEntropy = "";
         for ( var i = 0; i < drawEntropy.length; i++)
@@ -1277,9 +1376,13 @@ function winSetupPage2_cmdNext_click() {
         }
 
         const mnemonic = DynWallet.bip39.entropyToMnemonic(hexFinalHash);
-        console.log(mnemonic);
 
-        console.log(DynWallet.bip39.mnemonicToSeedSync(mnemonic).toString('hex'));
+        var masterSeed = DynWallet.bip39.mnemonicToSeedSync(mnemonic);
+        var node = DynWallet.bip32.fromSeed(masterSeed);
+        globalVars.xprv = node.toBase58();
+    
+
+        globalVars.seedWords = mnemonic.split (" ");
                 
         currentWindow = windowLayout["setupPage3"];
     }
@@ -1288,6 +1391,12 @@ function winSetupPage2_cmdNext_click() {
 function winSetupPage3_cmdReveal_click() {
     var panel = findControlByID("pnlHide");
     panel.visible = false;
+
+    for ( var i = 0; i < 12; i++) {
+        var lblWord = findControlByID("word" + i);
+        lblWord.text = globalVars.seedWords[i];
+    }
+        
 }
 
 function winSetupPage3_cmdNext_click() {
@@ -1295,10 +1404,36 @@ function winSetupPage3_cmdNext_click() {
     
     if (panel.visible)
         Msgbox ("Validation", "Please view and save your recovery seed");
-    else
+    else {
         currentWindow = windowLayout["setupPage4"];
+        globalVars.testWords = [];
+        var word1 = getRandomInt(3);
+        globalVars.testWords.push(word1);
+        var word2 = getRandomInt(3) + 3;
+        globalVars.testWords.push(word2);
+        var word3 = getRandomInt(3) + 6;
+        globalVars.testWords.push(word3);
+        var word4 = getRandomInt(3) + 9;
+        globalVars.testWords.push(word4);
+
+        var lbl1 = findControlByID("lblQuestion1");
+        var lbl2 = findControlByID("lblQuestion2");
+        var lbl3 = findControlByID("lblQuestion3");
+        var lbl4 = findControlByID("lblQuestion4");
+
+        lbl1.text = "Word " + (word1 + 1);
+        lbl2.text = "Word " + (word2 + 1);
+        lbl3.text = "Word " + (word3 + 1);
+        lbl4.text = "Word " + (word4 + 1);
+
+
+    }
 
 }
+
+function getRandomInt(max) {
+    return Math.floor(Math.random() * max);
+  }
 
 function winSetupPage4_cmdNext_click() {
     var txtQ1 = findControlByID("txtQuestion1");
@@ -1308,13 +1443,30 @@ function winSetupPage4_cmdNext_click() {
 
     if ((txtQ1.value.length == 0) || (txtQ2.value.length == 0) || (txtQ3.value.length == 0) || (txtQ4.value.length == 0))
         Msgbox ("Validation", "Please enter all the recovery words");
-    else
-        currentWindow = windowLayout["summary"];
+    else {
+        var ok = true;
+        if (txtQ1.value.toLowerCase() != globalVars.seedWords[globalVars.testWords[0]].toLowerCase())
+            ok = false;
+        if (txtQ2.value.toLowerCase() != globalVars.seedWords[globalVars.testWords[1]].toLowerCase())
+            ok = false;
+        if (txtQ3.value.toLowerCase() != globalVars.seedWords[globalVars.testWords[2]].toLowerCase())
+            ok = false;
+        if (txtQ4.value.toLowerCase() != globalVars.seedWords[globalVars.testWords[3]].toLowerCase())
+            ok = false;
+        if (ok) {
+            setupWallet();
+            currentWindow = windowLayout["summary"];
+            loadSummary();
+        }
+        else
+            Msgbox ("Validation", "Recovery words incorrect");
+    }
 }
 
 function winSummary_cmdCopyAddress_click() {
     var textArea = document.getElementById("txtClipboard");
-    textArea.value = "dy123234234234234234";
+    var localStorage = window.localStorage;
+    textArea.value = localStorage.getItem("addr0");
     textArea.focus();
     textArea.select();
 
@@ -1328,3 +1480,195 @@ function winSummary_cmdCopyAddress_click() {
         Msgbox("Failed", "Address could not be copied to clipboard");
     }
 }
+
+
+
+function loadSummary() {
+
+    var localStorage = window.localStorage;
+
+    var control = findControlByID("address");
+    control.text = localStorage.getItem("addr0");
+
+    /*
+    { type : "label", id: "address",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Address: dy123456789abcdefg"},
+    { type : "label", id: "balance",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "Balance: 2.45000000 DYN"},
+    { type : "label", id: "unconfirmed", x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Unconfirmed Balance: 0.30000000 DYN"},
+*/
+
+}
+
+
+////CRYPTO STUFF
+
+function hexFromHash ( data )
+ {
+     var result = "";
+     for ( var i = 0; i < data.length; i++) {
+         var hexStr = Math.abs(data[i]).toString(16);
+         while (hexStr.length < 8)
+             hexStr = '0' + hexStr;
+             result += hexStr;
+     }
+
+     return result;
+
+}
+
+
+
+function setupWallet() {
+
+    //save seed encrypted with plain text password
+    //save bech32 of /0/0/0 HD address
+
+
+    var storage = window.localStorage;
+
+    var encryptedSeed = encryptAES256 (globalVars.xprv, globalVars.plaintextPassword);
+    globalVars.plaintextPassword = null;   //might force GC in some browsers, at least we tried
+
+    storage.setItem ('xprv', encryptedSeed);
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    var root = DynWallet.bip32.fromBase58(globalVars.xprv, network);
+    var child = root.derivePath("m/0'/0'/0'");
+    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: child.publicKey, network});
+    var addr = script.address;
+
+    storage.setItem ('addr0', addr);
+
+
+}
+
+
+/*
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    const mnemonic = DynWallet.bip39.entropyToMnemonic("0101010101010101010101010101010101010101010101010101010101010101");
+    var seed = DynWallet.bip39.mnemonicToSeedSync(mnemonic);
+    var root = DynWallet.bip32.fromSeed(seed, network);
+    var child = root.derivePath("m/0'/0'/0'");
+    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: child.publicKey, network});
+    var addr = script.address;
+
+
+
+
+            var network = DynWallet.bitcoin.networks.bitcoin;
+        var root = DynWallet.bip32.fromBase58(strPvtKey, network);
+        var child = root.derivePath("m/0'/0'/0'");
+        var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: child.publicKey, network});
+        var addr = script.address;        
+
+
+*/
+
+
+    /*
+    var stuff = CryptoJS.SHA256("abcd");
+
+    const mnemonic = DynWallet.bip39.generateMnemonic();
+    console.log(mnemonic);
+*/
+
+
+    /*
+    var child = node.derivePath("m/0'/0'/0'");
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: child.publicKey, network});
+    console.log(script);
+    var addr = script.address;
+    console.log(addr);
+*/
+
+
+
+/*
+
+    var dest = DynWallet.bech32.bech32.decode('dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef');
+
+
+    const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(node.publicKey, { network: network });
+    const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
+
+    var script = DynWallet.bitcoin.payments.p2wpkh( {pubkey: node.publicKey, network});
+    console.log(script.address);
+
+    const p2sh = DynWallet.bitcoin.payments.p2sh({
+        redeem: DynWallet.bitcoin.payments.p2wpkh({ pubkey: node.publicKey, network }),
+        network
+      });
+
+    var psbt = new DynWallet.bitcoin.Psbt();
+
+    psbt.addOutput ( {address: 'dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef', value : 24000000});
+
+    psbt.addInput ( {
+        hash: 'ef3ffe45fbe913c138467b9a101fe5c24682cfbb6ea2c59ddd499e5221e31b0b',
+        index: 0,
+        //redeemScript: p2sh.redeem.output,
+        witnessUtxo: {
+          script: p2wpkh.output,
+          value: 24316921,
+        }
+    } );
+
+    psbt.signInput(0, node);
+    psbt.validateSignaturesOfInput(0, node.publicKey);
+    psbt.finalizeAllInputs();
+
+    const tx = psbt.extractTransaction();
+    console.log(tx.toHex());
+*/
+
+
+
+
+
+var AESkeySize = 256;
+var iterations = 9999;
+
+
+function encryptAES256 (msg, pass) {
+  var salt = CryptoJS.lib.WordArray.random(128/8);
+  
+  var key = CryptoJS.PBKDF2(pass, salt, {
+      keySize: AESkeySize/32,
+      iterations: iterations
+    });
+
+  var iv = CryptoJS.lib.WordArray.random(128/8);
+  
+  var encrypted = CryptoJS.AES.encrypt(msg, key, { 
+    iv: iv, 
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC
+    
+  });
+  
+  // salt, iv will be hex 32 in length
+  // append them to the ciphertext for use  in decryption
+  var transitmessage = salt.toString()+ iv.toString() + encrypted.toString();
+  return transitmessage;
+}
+
+function decryptAES256 (transitmessage, pass) {
+  var salt = CryptoJS.enc.Hex.parse(transitmessage.substr(0, 32));
+  var iv = CryptoJS.enc.Hex.parse(transitmessage.substr(32, 32))
+  var encrypted = transitmessage.substring(64);
+  
+  var key = CryptoJS.PBKDF2(pass, salt, {
+      keySize: AESkeySize/32,
+      iterations: iterations
+    });
+
+  var decrypted = CryptoJS.AES.decrypt(encrypted, key, { 
+    iv: iv, 
+    padding: CryptoJS.pad.Pkcs7,
+    mode: CryptoJS.mode.CBC
+    
+  })
+  return decrypted;
+}
+
