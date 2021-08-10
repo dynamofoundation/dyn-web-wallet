@@ -1490,6 +1490,17 @@ function loadSummary() {
     var control = findControlByID("address");
     control.text = localStorage.getItem("addr0");
 
+    var request = "/get_balance?addr=dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy";
+
+    $.ajax(
+        {url: request, success: function(result) {
+            var control = findControlByID("balance");
+            control.text = "Balance: " + result + " DYN";
+
+        }}
+    );
+
+
     /*
     { type : "label", id: "address",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Address: dy123456789abcdefg"},
     { type : "label", id: "balance",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "Balance: 2.45000000 DYN"},
