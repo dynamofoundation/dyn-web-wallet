@@ -38,12 +38,6 @@ var globalVars = new Object();
 var globalFont = "sans-serif";
 
 
-var scanQR;
-var cameraInit;
-var video;
-var qrLastCheck;
-var qrCanvas;
-
 
 jQuery(onLoad);
 
@@ -95,23 +89,7 @@ function onLoad() {
     if (storage.getItem ('xprv') === null)
         currentWindow = windowLayout["welcome"];
     else
-        currentWindow = windowLayout["login"];
-
-
-
-    scanQR = false;
-    video = document.createElement("video");
-    video.autoplay = true;
-    cameraInit = false;
-    
-    qrcode.callback = function (data) {
-        console.log(data);
-        if (data.startsWith('https')) {
-            scanQR = false;
-            cameraInit = false;
-            video.srcObject.getTracks()[0].stop();
-        }
-    };        
+        currentWindow = windowLayout["login"];  
 
     setTimeout( renderLoop, 500 );
 
@@ -300,56 +278,11 @@ function renderLoop() {
         drawMenu();
     }
 
-    renderMainContext();
-
-
-    if (scanQR)
-        if (!cameraInit)
-        {
-            const constraints = {
-                video: {
-                width: { min: 400, ideal: 400, max: 400 },
-                height: { min: 400, ideal: 400, max: 400 },
-                facingMode: "environment"
-                }
-            };    
-            navigator.mediaDevices.getUserMedia (
-                constraints,
-                function (stream) {video.srcObject = stream;},
-                function () {alert("Error accessing camera");}
-                );
-            qrCanvas = document.createElement('canvas');
-            requestAnimationFrame(updateCameraToCanvas);
-            cameraInit = true;
-        }            
+    renderMainContext();    
 
     setTimeout( renderLoop, 100 );
 }
 
-
-function updateCameraToCanvas(){
-    var scale = 0.5;
-    var vidH = video.videoHeight;
-    var vidW = video.videoWidth;
-    var top = 150;
-    var left = 75;
-    ctx.drawImage(video, left, top, vidW * scale, vidH * scale);
-    
-    var now = new Date();
-    if ((now.getTime() - qrLastCheck) > 500) {
-        qrLastCheck = now.getTime();
-        
-        qrCanvas.width = video.videoWidth;
-        qrCanvas.height = video.videoHeight;
-        var qrctx = qrCanvas.getContext("2d");
-        qrctx.drawImage(video, 0, 0, qrCanvas.width, qrCanvas.height);
-        data_url = qrCanvas.toDataURL('image/png');
-        qrcode.decode(data_url);                
-    }
-    
-    if (scanQR)
-       requestAnimationFrame(updateCameraToCanvas);
-}
 
 
 function drawMessagebox() {
@@ -1373,9 +1306,6 @@ function loadWindowLayout() {
             { type : "textbox", id: "txtAddr", x : 500, y: 750, w: 1400, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
             { type : "button", id: "cmdPaste", x: 1200, y: 950, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Paste From Clipboard"},
 
-            { type : "button", id: "cmdScanQR", x: 600, y: 1500, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Scan Payment QR"},
-
-
             { type : "button", id: "cmdSend", x: 1000, y: 1950, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
@@ -1433,10 +1363,6 @@ function loadWindowLayout() {
 
 }
 
-
-function winSend_cmdScanQR_click() {
-    scanQR = true;
-}
 
 
 function winWelcome_cmdCreate_click() {
