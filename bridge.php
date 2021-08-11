@@ -6,7 +6,7 @@
         $ch = curl_init();
 
         // set url
-        curl_setopt($ch, CURLOPT_URL, "http://192.168.3.47:8080/" . $_SERVER['QUERY_STRING']);
+        curl_setopt($ch, CURLOPT_URL, "http://192.168.1.117:8080/" . $_SERVER['QUERY_STRING']);
 
         //return the transfer as a string
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

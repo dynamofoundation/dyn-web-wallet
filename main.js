@@ -37,6 +37,8 @@ var globalVars = new Object();
 
 var globalFont = "sans-serif";
 
+var linkAction = "";
+var linkData = "";
 
 
 jQuery(onLoad);
@@ -45,6 +47,16 @@ jQuery(onLoad);
 
 function onLoad() {
 
+
+    const params = new URL(location).searchParams;
+    var action = params.get('action');
+    var data = params.get('data'); 
+
+    if (action == null) action = "";
+    if (data == null) data = "";
+
+    linkAction = action;
+    linkData = data;
 
 
     windowWidth = document.body.clientWidth;
@@ -106,6 +118,19 @@ $('#renderCanvas').focus().blur(function() {
 function initEventHandlers() {
     window.addEventListener("keyup", event_keypress);
     renderCanvas.addEventListener("mouseup", event_mouseup);
+
+    window.addEventListener('paste', (event) => {
+        let paste = (event.clipboardData || window.clipboardData).getData('text');
+
+        if (currentWindow.focus.length > 0) {
+            control = findControlByID (currentWindow.focus);
+            if (control.type == "textbox")
+                control.value = paste;
+        }        
+
+        event.preventDefault();
+    });    
+
 }
 
 function event_keypress(event) {
@@ -373,10 +398,10 @@ function drawMenu() {
         mainContext.strokeStyle = "rgb(0, 0, 0)";
         mainContext.lineWidth = 10;
         mainContext.fillStyle = "rgb(240, 240, 250)";
-        roundRect(mainContext, menuX, menuY + menuH, 1000, menuY + menuH + 1500, 10, true, true);
+        roundRect(mainContext, menuX, menuY + menuH, 1000, menuY + menuH + 1750, 10, true, true);
 
 
-        var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT"];
+        var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT", "Security"];
 
         for ( var i = 0; i < menuItems.length; i++ ) {
             mainContext.font = '96px ' + globalFont;
@@ -428,12 +453,15 @@ function processClickMenu (px, py) {
             i++;
 
     if (found) {
-        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft"];
+        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft", "security"];
         currentWindow = windowLayout[windows[i]];
         menuExpanded = false;
 
         if (windows[i] == "transactions")
             mainMenu_click_Transactions();
+
+        else if (windows[i] == "send")
+            mainMenu_click_Send();
 
     }
 
@@ -1303,8 +1331,12 @@ function loadWindowLayout() {
             { type : "label",  x : 1320, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
 
             { type : "label",  x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "To:"},
-            { type : "textbox", id: "txtAddr", x : 500, y: 750, w: 1400, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
-            { type : "button", id: "cmdPaste", x: 1200, y: 950, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Paste From Clipboard"},
+            { type : "textbox", id: "txtAddr", x : 500, y: 750, w: 1400, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
+
+            { type : "label",  x : 100, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "Fee:"},
+            { type : "textbox", id: "txtFee", x : 500, y: 950, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "0.0001" },
+            { type : "label",  x : 1320, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
+
 
             { type : "button", id: "cmdSend", x: 1000, y: 1950, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
 
@@ -1359,6 +1391,23 @@ function loadWindowLayout() {
         ]
     };
 
+    windowLayout['security'] = {
+        title: "Security Settings",
+        focus: "",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winSecurity",
+        hambugerMenu: true,
+        controls : [
+
+            { type : "label", id: "balance",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Use this function to create a QR code to"},
+            { type : "label", id: "balance",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "load your wallet on a another device."},
+            { type : "label", id: "balance",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "IMPORTANT: this allows access to all your coins."},
+            
+            { type : "button", id: "cmdXPRVqr", x: 500, y: 750, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Generate Wallet QR"},
+
+        ]
+    };
 
 
 }
@@ -1425,8 +1474,21 @@ function winLogin_cmdDone_click() {
     }
 
     if (xprv.startsWith("xprv")) {
-        currentWindow = windowLayout["summary"];
-        loadSummary();    
+
+        if (linkAction == "pay") {
+            currentWindow = windowLayout["send"];
+            var addr = findControlByID("txtAddr");
+            var amt = findControlByID("txtAmount");
+
+            var dataValues = linkData.split(",");
+            addr.value = dataValues[0];
+            amt.value = dataValues[1];
+            
+        }
+        else {
+            currentWindow = windowLayout["summary"];
+            loadSummary();    
+        }
     }
     else 
         Msgbox ("Security", "Incorrect password");
@@ -1591,10 +1653,26 @@ function winSummary_cmdCopyAddress_click() {
 }
 
 
+
+function winSend_cmdSend_click() {
+    
+}
+
+
 function mainMenu_click_Transactions() {
     loadTransactions();
 }
 
+
+function mainMenu_click_Send() {
+    var addr = findControlByID("txtAddr");
+    var amt = findControlByID("txtAmount");
+    var fee = findControlByID("txtFee");
+    addr.value = "";
+    amt.value = "";
+    fee.value = "0.0001";
+
+}
 
 function formatDate(date) {
     var d = new Date(date),
