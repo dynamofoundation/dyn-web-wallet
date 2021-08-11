@@ -37,6 +37,14 @@ var globalVars = new Object();
 
 var globalFont = "sans-serif";
 
+
+var scanQR;
+var cameraInit;
+var video;
+var qrLastCheck;
+var qrCanvas;
+
+
 jQuery(onLoad);
 
 
@@ -89,6 +97,21 @@ function onLoad() {
     else
         currentWindow = windowLayout["login"];
 
+
+
+    scanQR = false;
+    video = document.createElement("video");
+    video.autoplay = true;
+    cameraInit = false;
+    
+    qrcode.callback = function (data) {
+        console.log(data);
+        if (data.startsWith('https')) {
+            scanQR = false;
+            cameraInit = false;
+            video.srcObject.getTracks()[0].stop();
+        }
+    };        
 
     setTimeout( renderLoop, 500 );
 
@@ -279,7 +302,53 @@ function renderLoop() {
 
     renderMainContext();
 
+
+    if (scanQR)
+        if (!cameraInit)
+        {
+            const constraints = {
+                video: {
+                width: { min: 400, ideal: 400, max: 400 },
+                height: { min: 400, ideal: 400, max: 400 },
+                facingMode: "environment"
+                }
+            };    
+            navigator.mediaDevices.getUserMedia (
+                constraints,
+                function (stream) {video.srcObject = stream;},
+                function () {alert("Error accessing camera");}
+                );
+            qrCanvas = document.createElement('canvas');
+            requestAnimationFrame(updateCameraToCanvas);
+            cameraInit = true;
+        }            
+
     setTimeout( renderLoop, 100 );
+}
+
+
+function updateCameraToCanvas(){
+    var scale = 0.5;
+    var vidH = video.videoHeight;
+    var vidW = video.videoWidth;
+    var top = 150;
+    var left = 75;
+    ctx.drawImage(video, left, top, vidW * scale, vidH * scale);
+    
+    var now = new Date();
+    if ((now.getTime() - qrLastCheck) > 500) {
+        qrLastCheck = now.getTime();
+        
+        qrCanvas.width = video.videoWidth;
+        qrCanvas.height = video.videoHeight;
+        var qrctx = qrCanvas.getContext("2d");
+        qrctx.drawImage(video, 0, 0, qrCanvas.width, qrCanvas.height);
+        data_url = qrCanvas.toDataURL('image/png');
+        qrcode.decode(data_url);                
+    }
+    
+    if (scanQR)
+       requestAnimationFrame(updateCameraToCanvas);
 }
 
 
@@ -520,6 +589,20 @@ function drawTextbox ( control ) {
 }
 
 function processTextboxKeypress (control, key) {
+
+    if (control.numberOnly) {        
+        ok = false;
+        if (key == "Backspace")
+            ok = true;
+        if (key == "Enter")
+            ok = true;
+        if (key == ".")
+            ok = true;
+        if ((key >= "0") && (key <= "9"))
+            ok = true;
+        if (!ok)
+            return;
+    }
 
     if (key.length == 1)
         control.value = control.value + key;
@@ -967,7 +1050,7 @@ function loadWindowLayout() {
             { type : "label", x : 1000, y: 450, fontsize : "128", fontcolor : "white", align : "center", text : "Enter Wallet Password"},
             { type : "label", x : 1000, y: 600, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to unlock the wallet."},
 
-            { type : "textbox", id: "txtPassword", x : 1000, y: 800, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, value: "" },
+            { type : "textbox", id: "txtPassword", x : 1000, y: 800, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
 
             { type : "button", id: "cmdDone", x: 1000, y: 1200, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
 
@@ -1010,21 +1093,21 @@ function loadWindowLayout() {
 
             { type : "label", x : 70, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : "Words 1 to 6"},
 
-            { type : "textbox", id: "word0", x : 70, y: 830, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word1", x : 70, y: 980, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word2", x : 70, y: 1130, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word3", x : 70, y: 1280, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word4", x : 70, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word5", x : 70, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word0", x : 70, y: 830, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word1", x : 70, y: 980, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word2", x : 70, y: 1130, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word3", x : 70, y: 1280, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word4", x : 70, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word5", x : 70, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
             { type : "label", x : 1000, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : "Words 7 to 12"},
 
-            { type : "textbox", id: "word6", x : 1000, y: 830, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word7", x : 1000, y: 980, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word8", x : 1000, y: 1130, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word9", x : 1000, y: 1280, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word10", x : 1000, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
-            { type : "textbox", id: "word11", x : 1000, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "word6", x : 1000, y: 830, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word7", x : 1000, y: 980, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word8", x : 1000, y: 1130, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word9", x : 1000, y: 1280, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word10", x : 1000, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "word11", x : 1000, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
             { type : "button", id: "cmdDone", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
 
@@ -1051,8 +1134,8 @@ function loadWindowLayout() {
             { type : "label", x : 1000, y: 1200, fontsize : "80", fontcolor : "white", align : "center", text : "Enter password"},
             { type : "label", x : 1000, y: 1600, fontsize : "80", fontcolor : "white", align : "center", text : "Re-enter password"},
 
-            { type : "textbox", id: "txtPassword1", x : 1000, y: 1300, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, value: "" },
-            { type : "textbox", id: "txtPassword2", x : 1000, y: 1700, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, value: "" },
+            { type : "textbox", id: "txtPassword1", x : 1000, y: 1300, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+            { type : "textbox", id: "txtPassword2", x : 1000, y: 1700, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
 
             { type : "button", id: "cmdNext", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"},
 
@@ -1163,16 +1246,16 @@ function loadWindowLayout() {
             { type : "label", x : 1000, y: 800, fontsize : "80", fontcolor : "white", align : "center", text : "recovery seed correctly."},
 
             { type : "label", id: "lblQuestion1", x : 400, y: 1100, fontsize : "80", fontcolor : "white", align : "left", text : "Word 2: "},
-            { type : "textbox", id: "txtQuestion1", x : 750, y: 1000, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "txtQuestion1", x : 750, y: 1000, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
             { type : "label", id: "lblQuestion2", x : 400, y: 1300, fontsize : "80", fontcolor : "white", align : "left", text : "Word 5: "},
-            { type : "textbox", id: "txtQuestion2", x : 750, y: 1200, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "txtQuestion2", x : 750, y: 1200, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
             { type : "label", id: "lblQuestion3", x : 400, y: 1500, fontsize : "80", fontcolor : "white", align : "left", text : "Word 8: "},
-            { type : "textbox", id: "txtQuestion3", x : 750, y: 1400, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "txtQuestion3", x : 750, y: 1400, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
             { type : "label", id: "lblQuestion4", x : 400, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "Word 11: "},
-            { type : "textbox", id: "txtQuestion4", x : 750, y: 1600, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, value: "" },
+            { type : "textbox", id: "txtQuestion4", x : 750, y: 1600, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
@@ -1274,11 +1357,29 @@ function loadWindowLayout() {
     windowLayout['send'] = {
         title: "Send Dynamo",
         focus: "",
-        allowVirtKeyboard: false,
+        allowVirtKeyboard: true,
         keyboardVisible: false,
         id: "winSend",
         hambugerMenu: true,
         controls : [
+
+            { type : "label", id: "balance",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Available balance: 10000.00000000 DYN"},
+
+            { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "Amount:"},
+            { type : "textbox", id: "txtAmount", x : 500, y: 550, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
+            { type : "label",  x : 1320, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
+
+            { type : "label",  x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "To:"},
+            { type : "textbox", id: "txtAddr", x : 500, y: 750, w: 1400, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
+            { type : "button", id: "cmdPaste", x: 1200, y: 950, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Paste From Clipboard"},
+
+            { type : "button", id: "cmdScanQR", x: 600, y: 1500, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Scan Payment QR"},
+
+
+            { type : "button", id: "cmdSend", x: 1000, y: 1950, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false },
+
         ]
     };
 
@@ -1333,6 +1434,9 @@ function loadWindowLayout() {
 }
 
 
+function winSend_cmdScanQR_click() {
+    scanQR = true;
+}
 
 
 function winWelcome_cmdCreate_click() {
