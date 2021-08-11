@@ -134,6 +134,8 @@ function initEventHandlers() {
 }
 
 function event_keypress(event) {
+    if (event.altKey || event.ctrlKey)
+        return;
     processKeyEvent (event.key);
 }
 
@@ -1345,6 +1347,35 @@ function loadWindowLayout() {
         ]
     };
 
+
+    windowLayout['send_confirm'] = {
+        title: "Transaction Confirmation",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winSendConfirm",
+        hambugerMenu: true,
+        controls : [
+
+            { type : "label", x : 200, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "You are about to submit the transaction"},
+            { type : "label", x : 200, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "listed below.  Once sent this cannot be"},
+            { type : "label", x : 200, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "reversed.  Please verify all details"},
+            { type : "label", x : 200, y: 750, fontsize : "80", fontcolor : "white", align : "left", text : "before proceeding."},
+
+            { type : "label", id: "lblAddress", x : 100, y: 950, fontsize : "64", fontcolor : "white", align : "left", text : "Destination: dy123456"},
+            { type : "label", id: "lblAmount",x : 100, y: 1050, fontsize : "64", fontcolor : "white", align : "left", text : "Amount: 10.00000000 DYN"},
+            { type : "label", id: "lblFee",x : 100, y: 1150, fontsize : "64", fontcolor : "white", align : "left", text : "Fee: 0.0001 DYN"},
+            { type : "label", id: "lblTotal",x : 100, y: 1250, fontsize : "64", fontcolor : "white", align : "left", text : "Total: 10.00010000 DYN"},
+
+
+            { type : "label", id: "balance",  x : 1000, y: 1600, fontsize : "80", fontcolor : "white", align : "center", text : "Are you sure you want to send?"},
+
+            { type : "button", id: "cmdSend", x: 1000, y: 1700, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
+
+        ]
+    };    
+
+
     windowLayout['receive'] = {
         title: "Receive Dynamo",
         focus: "",
@@ -1459,19 +1490,27 @@ function winImport_cmdDone_click() {
 }
 
 
-function winLogin_cmdDone_click() {
-
-    var txtPass = findControlByID("txtPassword").value;
+function decryptXPRV(password) {
 
     var localStorage = window.localStorage;
     var encryptedKey = localStorage.getItem("xprv");
 
     var xprv = "";
     try {
-        xprv = decryptAES256 (encryptedKey, txtPass).toString(CryptoJS.enc.Utf8);
+        xprv = decryptAES256 (encryptedKey, password).toString(CryptoJS.enc.Utf8);
     }
     catch(err) {        
     }
+
+    return xprv;
+
+}
+
+function winLogin_cmdDone_click() {
+
+    var txtPass = findControlByID("txtPassword").value;
+
+    var xprv = decryptXPRV (txtPass);
 
     if (xprv.startsWith("xprv")) {
 
@@ -1653,9 +1692,107 @@ function winSummary_cmdCopyAddress_click() {
 }
 
 
+function parseDecimal ( data ) {
+
+    var intPart = "";
+    var decPart = "";
+
+    if (data.charAt(0) == ".")
+        data = "0" + data;
+
+    if (data.indexOf(".") == -1) {
+        intPart = data;
+        decPart = "00000000";
+    }
+    else {
+        intPart = data.substring(0, data.indexOf("."));
+        decPart = data.substring(data.indexOf(".")+1);
+        while (decPart.length < 8)
+            decPart = decPart + "0";
+    }
+
+    return intPart + decPart;
+}
+
+
+function makeDecimal ( data ) {
+    var result = "" + data;
+    while (result.length < 8)
+        result = "0" +  result;
+    
+    if (result.length == 8)
+        result = "0." + result;
+    else if (result.length > 8)
+        result = result.substring(0,result.length - 8) + "." + result.substring(result.length-8);
+
+    return result;
+}
 
 function winSend_cmdSend_click() {
-    
+
+    var addr = findControlByID("txtAddr");
+    var amt = findControlByID("txtAmount");
+    var fee = findControlByID("txtFee");
+
+    if (addr.value.length != 42) {
+        Msgbox("Verification", "Incorrect address length");
+        return;
+    }
+
+    if (amt.value.length == 0) {
+        Msgbox("Verification", "Please enter an amount");
+        return;
+    }
+
+    if (fee.value.length == 0) {
+        Msgbox("Verification", "Please enter a fee");
+        return;
+    }
+
+    var strAmt = parseDecimal(amt.value);
+    var strFee = parseDecimal(fee.value);
+
+    var iAmt = parseInt(strAmt);
+    var iFee = parseInt(strFee);
+
+    if (iAmt <= 0) {
+        Msgbox("Verification", "Amount must be positive");
+        return;
+    }
+
+    if (iFee <= 0) {
+        Msgbox("Verification", "Fee must be positive");
+        return;
+    }
+
+    currentWindow = windowLayout['send_confirm'];
+
+    var lblAddress = findControlByID("lblAddress");
+    var lblAmount = findControlByID("lblAmount");
+    var lblFee = findControlByID("lblFee");
+    var lblTotal = findControlByID("lblTotal");
+
+    lblAddress.text = "Destination: " + addr.value;
+    lblAmount.text = "Amount: " + makeDecimal(iAmt);
+    lblFee.text = "Fee: " + makeDecimal (iFee);
+    lblTotal.text = "Total: " +  makeDecimal (iAmt + iFee);
+
+    globalVars.sendAmt = iAmt;
+    globalVars.sendFee = iFee;
+    globalVars.sendAddr = addr.value;
+
+
+}
+
+
+function winSendConfirm_cmdSend_click() {
+
+    globalVars.sendAmt = iAmt;
+    globalVars.sendFee = iFee;
+    globalVars.sendAddr = addr.value;
+
+
+
 }
 
 
@@ -1880,10 +2017,45 @@ function setupWallet() {
 
 
 
+function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+
+    var dest = DynWallet.bech32.bech32.decode(destAddr);
+
+    var xprv = decryptXPRV (password);
+
+    var root = DynWallet.bip32.fromBase58(xprv, network);
+    var child = root.derivePath("m/0'/0'/0'");
+    const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(child.publicKey, { network: network });
+    const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
+
+    var psbt = new DynWallet.bitcoin.Psbt();
+
+    var changeAddr = window.localStorage.getItem("addr0");
+    psbt.addOutput ( {address: destAddr, value : amount});
+
+    for ( var i = 0; i < utxoSet.length; i++ ) {
+        psbt.addInput ( {
+            hash: utxoSet[i].txID,
+            index: utxoSet[i].vout,
+            witnessUtxo: {
+              script: p2wpkh.output,
+              value: utxoSet[i].amount,
+            }
+        } );        
+        psbt.signInput(i, child);
+        psbt.validateSignaturesOfInput(i, child.publicKey);
+    }
+
+    psbt.finalizeAllInputs();
+    const tx = psbt.extractTransaction();
+    var strHexTransaction = tx.toHex();
+}
+
 /*
 
     var dest = DynWallet.bech32.bech32.decode('dy1qgvluf2ej6n58e8vpxdzad2cjqw2pkasrghkaef');
-
 
     const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(node.publicKey, { network: network });
     const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
