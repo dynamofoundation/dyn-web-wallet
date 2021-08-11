@@ -35,6 +35,8 @@ var menuItemLocations = [];
 
 var globalVars = new Object();
 
+var globalFont = "sans-serif";
+
 jQuery(onLoad);
 
 
@@ -293,12 +295,12 @@ function drawMessagebox() {
     mainContext.fillStyle = "rgb(200, 200, 200)";
     roundRect(mainContext, x - w / 2, y - h / 2, w, h, 20, true, true);
 
-    mainContext.font = '96px serif bold';
+    mainContext.font = '96px ' + globalFont + ' bold';
     mainContext.fillStyle = "black";
     mainContext.textAlign = "center";
     mainContext.fillText (msgboxTitle, 1000, y - h/2 + 100 );
 
-    mainContext.font = '80px serif';
+    mainContext.font = '80px ' + globalFont;
     mainContext.fillStyle = "black";
     mainContext.textAlign = "center";
 
@@ -375,7 +377,7 @@ function drawMenu() {
         var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT"];
 
         for ( var i = 0; i < menuItems.length; i++ ) {
-            mainContext.font = '96px serif';
+            mainContext.font = '96px ' + globalFont;
             mainContext.fillStyle = "black";
             mainContext.textAlign = "left";
             mainContext.fillText (menuItems[i], 100, 400 + i * 250);
@@ -427,6 +429,10 @@ function processClickMenu (px, py) {
         var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft"];
         currentWindow = windowLayout[windows[i]];
         menuExpanded = false;
+
+        if (windows[i] == "transactions")
+            mainMenu_click_Transactions();
+
     }
 
 }
@@ -449,6 +455,9 @@ function drawWindow () {
             
         else if (control.type == "panel")
             drawPanel (control);
+
+        else if (control.type == "rect")
+            drawRect (control);
             
     }
 
@@ -466,7 +475,7 @@ function drawWindow () {
 
 ////////////////////////   Label
 function drawLabel (control) {
-    mainContext.font = control.fontsize + 'px serif';
+    mainContext.font = control.fontsize + 'px ' + globalFont;
     mainContext.fillStyle = control.fontcolor;
     mainContext.textAlign = control.align;
     mainContext.fillText (control.text, control.x, control.y );
@@ -503,7 +512,7 @@ function drawTextbox ( control ) {
         }
     }
 
-    mainContext.font = control.fontsize + 'px serif';
+    mainContext.font = control.fontsize + 'px ' + globalFont;
     mainContext.fillStyle = control.fontcolor;
     mainContext.textAlign = "left";
     mainContext.fillText ( textboxData, x + control.texthorizoffset, control.y + control.textvertoffset );        
@@ -541,7 +550,7 @@ function drawButton ( control ) {
     mainContext.lineWidth = 5;
     mainContext.fillStyle = "rgb(240, 240, 240)";
     roundRect(mainContext, control.x - control.w / 2, control.y, control.w, control.h, 20, true, false);
-    mainContext.font = control.contsize + 'px serif';
+    mainContext.font = control.contsize + 'px ' + globalFont;
     mainContext.fillStyle = control.fontcolor;
     mainContext.textAlign = "center";
     mainContext.fillText (control.caption, control.x, control.y + control.h / 2 + control.textvertoffset );
@@ -592,7 +601,7 @@ function drawKeyboard ( control ) {
             mainContext.fillStyle = "rgb(240, 240, 240)";
             roundRect(mainContext, x, y, buttonSize, buttonSize, 20, true, true);
 
-            mainContext.font = '96px serif';
+            mainContext.font = '96px ' + globalFont;
             mainContext.fillStyle = "black"
             mainContext.textAlign = "center";
             var buttonText;
@@ -623,7 +632,7 @@ function drawKeyboard ( control ) {
     mainContext.fillStyle = "rgb(240, 240, 240)";
     roundRect(mainContext, 500, keyboardY + 3 * (rowHeight + rowSpacing), 6 * buttonSize, buttonSize, 20, true, true);
 
-    mainContext.font = '96px serif';
+    mainContext.font = '96px ' + globalFont;
     mainContext.fillStyle = "black"
     mainContext.textAlign = "center";
     mainContext.fillText ("Space", 1000, keyboardY + 3 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
@@ -643,7 +652,7 @@ function drawKeyboard ( control ) {
     mainContext.fillStyle = "rgb(90, 90, 90)";
     roundRect(mainContext, keyboardX, keyboardY + 3 * (rowHeight + rowSpacing), buttonSize, buttonSize, 20, true, true);
 
-    mainContext.font = '80px serif';
+    mainContext.font = '80px ' + globalFont;
     mainContext.fillStyle = "white"
     mainContext.textAlign = "center";
     mainContext.fillText ("123", keyboardX + buttonSize / 2, keyboardY + 3 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
@@ -663,7 +672,7 @@ function drawKeyboard ( control ) {
     mainContext.fillStyle = "rgb(64, 64, 255)";
     roundRect(mainContext, keyboardX + width - buttonSize * 2, keyboardY + 3 * (rowHeight + rowSpacing), buttonSize * 2, buttonSize, 20, true, true);
 
-    mainContext.font = '80px serif';
+    mainContext.font = '80px ' + globalFont;
     mainContext.fillStyle = "white"
     mainContext.textAlign = "center";
     mainContext.fillText ("Enter", keyboardX + width - buttonSize, keyboardY + 3 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
@@ -683,7 +692,7 @@ function drawKeyboard ( control ) {
         mainContext.fillStyle = "rgb(90, 90, 90)";
         roundRect(mainContext, keyboardX, keyboardY + 2 * (rowHeight + rowSpacing), buttonSize, buttonSize, 20, true, true);
 
-        mainContext.font = '64px serif';
+        mainContext.font = '64px ' + globalFont;
         mainContext.fillStyle = "white"
         mainContext.textAlign = "center";
         mainContext.fillText ("shift", keyboardX + buttonSize / 2, keyboardY + 2 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
@@ -703,7 +712,7 @@ function drawKeyboard ( control ) {
     mainContext.fillStyle = "rgb(90, 90, 90)";
     roundRect(mainContext, keyboardX + width - buttonSize, keyboardY + 2 * (rowHeight + rowSpacing), buttonSize, buttonSize, 20, true, true);
 
-    mainContext.font = '80px serif';
+    mainContext.font = '80px ' + globalFont;
     mainContext.fillStyle = "white"
     mainContext.textAlign = "center";
     mainContext.fillText ("<-", keyboardX + width - buttonSize + buttonSize / 2, keyboardY + 2 * (rowHeight + rowSpacing) + buttonSize / 2 + 35 );
@@ -824,6 +833,19 @@ function pointInDrawing ( x, y, control ) {
 
 
 
+
+///////////////////////////////Rect
+
+function drawRect ( control ) {
+    if (!control.visible)
+        return;
+
+    mainContext.strokeStyle = control.color;
+    mainContext.lineWidth = control.lineSize;
+
+    roundRect(mainContext, control.x, control.y, control.w, control.h, 5, false, true);
+}
+
 ///////////////////////////////Panel
 function drawPanel ( control ) {
 
@@ -869,7 +891,7 @@ function drawBackground(windowTitle, enableMenu) {
     mainContext.fillStyle = "rgb(220, 220, 220)";
     roundRect(mainContext, 62, 62, 1880, 200, 30, true, false);
 
-    mainContext.font = '112px serif';
+    mainContext.font = '112px ' + globalFont;
     mainContext.fillStyle = "black";
     mainContext.textAlign = "center";
     mainContext.fillText (windowTitle, 1000, 195 );
@@ -1181,13 +1203,70 @@ function loadWindowLayout() {
 
 
     windowLayout['transactions'] = {
-        title: "Transaction history",
+        title: "Transaction History",
         focus: "",
         allowVirtKeyboard: false,
         keyboardVisible: false,
         id: "winTransactionHistory",
         hambugerMenu: true,
         controls : [
+            { type : "label", id: "date0",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action0",  x : 950, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt0",  x : 1200, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr0",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect0", x: 80, y: 350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date1",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action1",  x : 950, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt1",  x : 1200, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr1",  x : 100, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect1", x: 80, y: 600, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date2",  x : 100, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action2",  x : 950, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt2",  x : 1200, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr2",  x : 100, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect2", x: 80, y: 850, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date3",  x : 100, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action3",  x : 950, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt3",  x : 1200, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr3",  x : 100, y: 1300, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect3", x: 80, y: 1100, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date4",  x : 100, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action4",  x : 950, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt4",  x : 1200, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr4",  x : 100, y: 1550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect4", x: 80, y: 1350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date5",  x : 100, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action5",  x : 950, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt5",  x : 1200, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr5",  x : 100, y: 1800, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect5", x: 80, y: 1600, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date6",  x : 100, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action6",  x : 950, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt6",  x : 1200, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr6",  x : 100, y: 2050, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect6", x: 80, y: 1850, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date7",  x : 100, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action7",  x : 950, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt7",  x : 1200, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr7",  x : 100, y: 2300, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect7", x: 80, y: 2100, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "label", id: "date8",  x : 100, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "action8",  x : 950, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
+            { type : "label", id: "amt8",  x : 1200, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
+            { type : "label", id: "addr8",  x : 100, y: 2550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type: "rect", id: "rect8", x: 80, y: 2350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
+
+            { type : "button", id: "cmdPrev", x: 300, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Prev"},
+            { type : "button", id: "cmdNext", x: 1700, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"}
+
         ]
     };
 
@@ -1482,6 +1561,98 @@ function winSummary_cmdCopyAddress_click() {
 }
 
 
+function mainMenu_click_Transactions() {
+    loadTransactions();
+}
+
+
+function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear(),
+        hour = '' + (d.getHours()),
+        minute = '' + (d.getMinutes()),
+        second = '' + (d.getSeconds());
+
+    if (month.length < 2) 
+        month = '0' + month;
+    if (day.length < 2) 
+        day = '0' + day;
+
+    if (hour.length < 2) 
+        hour = '0' + hour;
+    if (minute.length < 2) 
+        minute = '0' + minute;
+    if (second.length < 2) 
+        second = '0' + second;
+
+    return [year, month, day].join('-') + ' ' + [hour, minute, second].join(':');
+}
+
+
+function loadTransactions() {
+
+    var localStorage = window.localStorage;
+
+    var control = findControlByID("address");
+    control.text = localStorage.getItem("addr0");
+
+    var request = "/bridge.php?get_transactions?addr=dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy&start=0";
+
+    $.ajax(
+        {url: request, success: function(result) {
+
+            var cDate = [];
+            var cAction = [];
+            var cAmt = [];
+            var cAddr = [];
+            var cRect = [];
+            for (var i = 0; i < 9; i++) {
+                cDate[i] = findControlByID("date" + i);
+                cAction[i] = findControlByID("action" + i);
+                cAmt[i] = findControlByID("amt" + i);
+                cAddr[i] = findControlByID("addr" + i);
+                cRect[i] = findControlByID("rect" + i);
+
+                cDate[i].text = "";
+                cAction[i].text = "";
+                cAmt[i].text = "";
+                cAddr[i].text = "";
+                cRect[i].visible = false;
+            }
+
+            var lines = result.split("\n");
+            for (var i = 0; i < 9; i++) {
+                if (i < lines.length) {
+                    var lineData = lines[i].split(",");
+
+                    var amt = lineData[3];
+                    while (amt.length < 8)
+                        amt = "0" + amt;
+                    if (amt.length == 8)
+                        amt = "0." + amt;
+                    else
+                        amt = amt.substring(0, amt.length-8) + "." + amt.substring(amt.length-8);
+    
+                    var timestamp = parseInt(lineData[0], 10);
+                    var transDate = new Date(timestamp * 1000);
+                    var strDate = formatDate(transDate);
+
+                    cDate[i].text = strDate;
+                    cAction[i].text = lineData[1];
+                    cAmt[i].text = amt;
+                    cAddr[i].text = lineData[2];
+                    cRect[i].visible = true;    
+                }
+            }
+
+        }}
+    );
+
+    
+}
+
 
 function loadSummary() {
 
@@ -1490,10 +1661,16 @@ function loadSummary() {
     var control = findControlByID("address");
     control.text = localStorage.getItem("addr0");
 
-    var request = "/get_balance?addr=dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy";
+    var request = "/bridge.php?get_balance?addr=dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy";
 
     $.ajax(
         {url: request, success: function(result) {
+            while (result.length < 8)
+                result = "0" + result;
+            if (result.length == 8)
+                result = "0." + result;
+            else
+                result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
             var control = findControlByID("balance");
             control.text = "Balance: " + result + " DYN";
 
