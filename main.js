@@ -1367,10 +1367,13 @@ function loadWindowLayout() {
             { type : "label", id: "lblFee",x : 100, y: 1150, fontsize : "64", fontcolor : "white", align : "left", text : "Fee: 0.0001 DYN"},
             { type : "label", id: "lblTotal",x : 100, y: 1250, fontsize : "64", fontcolor : "white", align : "left", text : "Total: 10.00010000 DYN"},
 
+            { type : "label", x : 1000, y: 1450, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to confirm."},
 
-            { type : "label", id: "balance",  x : 1000, y: 1600, fontsize : "80", fontcolor : "white", align : "center", text : "Are you sure you want to send?"},
+            { type : "textbox", id: "txtPassword", x : 1000, y: 1600, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
 
-            { type : "button", id: "cmdSend", x: 1000, y: 1700, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
+            { type : "label", id: "balance",  x : 1000, y: 1800, fontsize : "80", fontcolor : "white", align : "center", text : "Are you sure you want to send?"},
+
+            { type : "button", id: "cmdSend", x: 1000, y: 1900, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
 
         ]
     };    
@@ -1787,10 +1790,29 @@ function winSend_cmdSend_click() {
 
 function winSendConfirm_cmdSend_click() {
 
-    globalVars.sendAmt = iAmt;
-    globalVars.sendFee = iFee;
-    globalVars.sendAddr = addr.value;
+    var fromAddr = window.localStorage.getItem("addr0");
+    var request = "bridge.php?get_utxo?addr=" + fromAddr + "&amount=" + (globalVars.sendAmt + globalVars.sendFee);
 
+    var password = findControlByID("txtPassword").value;
+
+    $.ajax(
+        {url: request, success: function(result) {
+            
+            var utxoSet = [];
+            var lines = result.split("\n");
+            for ( var i = 0; i < lines.length; i++) {
+                var utxo = new Object();
+                utxo.txID = lines[i][0];
+                utxo.vout = parseInt (lines[i][1]);
+                utxo.amount = parseInt (lines[i][2]);
+                utxoSet.push(utxo);
+            }
+
+            var password = findControlByID("txtPassword").value;
+
+            sendCoins ( globalVars.sendAddr, globalVars.sendAmt, globalVars.sendFee, utxoSet, password);
+        }}
+    );    
 
 
 }
@@ -2032,8 +2054,16 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
 
     var psbt = new DynWallet.bitcoin.Psbt();
 
-    var changeAddr = window.localStorage.getItem("addr0");
     psbt.addOutput ( {address: destAddr, value : amount});
+
+    var totalAmt = 0;
+    for ( var i = 0; i < utxoSet.length; i++ ) 
+        totalAmt += utxoSet[i].amount;
+
+    var changeAmt = totalAmt - amount - fee;
+    var changeAddr = window.localStorage.getItem("addr0");
+
+    psbt.addOutput ( {address: changeAddr, value : changeAmt});
 
     for ( var i = 0; i < utxoSet.length; i++ ) {
         psbt.addInput ( {
