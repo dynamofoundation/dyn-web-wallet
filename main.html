@@ -1,27 +1,11 @@
 <html>
     <head>
       <script type="text/javascript" src= "crypto-js/crypto-js.js"></script>
+      <script type="text/javascript" src= "qrcode.js"></script>
       <script type="text/javascript" src= "wallet_utils.js"></script>        
-        <script type="text/javascript" src= "jquery.min.js"></script>
-        <script type="text/javascript" src= "main.js"></script>
+      <script type="text/javascript" src= "jquery.min.js"></script>
+      <script type="text/javascript" src= "main.js"></script>
 
-        <script type="text/javascript" src="qr/grid.js"></script>
-        <script type="text/javascript" src="qr/version.js"></script>
-        <script type="text/javascript" src="qr/detector.js"></script>
-        <script type="text/javascript" src="qr/formatinf.js"></script>
-        <script type="text/javascript" src="qr/errorlevel.js"></script>
-        <script type="text/javascript" src="qr/bitmat.js"></script>
-        <script type="text/javascript" src="qr/datablock.js"></script>
-        <script type="text/javascript" src="qr/bmparser.js"></script>
-        <script type="text/javascript" src="qr/datamask.js"></script>
-        <script type="text/javascript" src="qr/rsdecoder.js"></script>
-        <script type="text/javascript" src="qr/gf256poly.js"></script>
-        <script type="text/javascript" src="qr/gf256.js"></script>
-        <script type="text/javascript" src="qr/decoder.js"></script>
-        <script type="text/javascript" src="qr/qrcode.js"></script>
-        <script type="text/javascript" src="qr/findpat.js"></script>
-        <script type="text/javascript" src="qr/alignpat.js"></script>
-        <script type="text/javascript" src="qr/databr.js"></script>        
 
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     </head>
@@ -30,6 +14,7 @@
       <canvas id="stepCanvas" height=1500 width=1000 style="display:none"></canvas>
       <textarea id="txtClipboard" style='position:absolute; left:-1000px;font-size: 24px;'></textarea> 
       <canvas id="renderCanvas" tabindex= 0 style='position:absolute; left:0px; top:0px;margin: 0px;border: 0'></canvas>
+      <div id="divQR" style="display:none"></div>
     </body>
 </html>
 

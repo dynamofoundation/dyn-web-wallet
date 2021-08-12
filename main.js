@@ -27,6 +27,7 @@ var keyboardButtonLocations = [];
 var msgboxVisible = false;
 var msgboxText;
 var msgboxTitle;
+var msgboxCallback;
 
 var globalVars;
 
@@ -40,17 +41,25 @@ var globalFont = "sans-serif";
 var linkAction = "";
 var linkData = "";
 
+var QRimg;
+var QRCountdown;
 
 jQuery(onLoad);
 
 
-
 function onLoad() {
 
+  
 
-    const params = new URL(location).searchParams;
-    var action = params.get('action');
-    var data = params.get('data'); 
+    var action = null;
+    var data = null;
+
+    try {
+        const params = new URL(location).searchParams;
+        var action = params.get('action');
+        var data = params.get('data'); 
+    }
+    catch(err) {}
 
     if (action == null) action = "";
     if (data == null) data = "";
@@ -93,10 +102,7 @@ function onLoad() {
     loadImages();
     loadWindowLayout()
     initEventHandlers();
-
-    currentWindow = windowLayout["welcome"];
-
-    
+   
     var storage = window.localStorage;
     if (storage.getItem ('xprv') === null)
         currentWindow = windowLayout["welcome"];
@@ -161,8 +167,11 @@ function processClickEvent ( x, y ) {
     var py = y * scaleY;
 
     if (msgboxVisible) {
-        if (pointInRect ( px, py, 1000 - 400/2, 1750 - 150/2, 500, 150))
+        if (pointInRect ( px, py, 1000 - 400/2, 1750 - 150/2, 500, 150)) {
             msgboxVisible = false;
+            if (msgboxCallback.length > 0)
+                window[msgboxCallback]();
+        }
         return;
     }
 
@@ -303,6 +312,21 @@ function renderLoop() {
 
     if (currentWindow.hambugerMenu) {
         drawMenu();
+    }
+
+    if (QRimg != null) {
+        var control = findControlByID("countdown");
+        if ((Date.now() - QRCountdown) > 10000) {
+            QRimg = null;
+            control.text = "";
+            control = findControlByID("txtPassword");
+            control.value = "";
+        }
+        else {
+            var seconds = Math.floor((Date.now() - QRCountdown) / 1000);
+            control.text = "Removing image in " + (10 - seconds) + " seconds";
+            mainContext.drawImage(QRimg, 700, 1500);
+        }
     }
 
     renderMainContext();    
@@ -952,10 +976,11 @@ function drawBackground(windowTitle, enableMenu) {
 }
 
 
-function Msgbox ( alertTitle, alertText ) {
+function Msgbox ( alertTitle, alertText, callback = "" ) {
     msgboxVisible = true;
     msgboxTitle = alertTitle;
     msgboxText = alertText;
+    msgboxCallback = callback;
 }
 
 
@@ -1316,8 +1341,10 @@ function loadWindowLayout() {
             { type : "label", id: "addr8",  x : 100, y: 2550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
             { type: "rect", id: "rect8", x: 80, y: 2350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "button", id: "cmdPrev", x: 300, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Prev"},
-            { type : "button", id: "cmdNext", x: 1700, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"}
+            { type : "label", id: "blocktime",  x : 1000, y: 2800, fontsize : "80", fontcolor : "white", align : "center", text : "2021-08-10 16:23:45"},
+
+            { type : "button", id: "cmdPrev", x: 250, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Prev"},
+            { type : "button", id: "cmdNext", x: 1750, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"}
 
         ]
     };
@@ -1374,7 +1401,6 @@ function loadWindowLayout() {
             { type : "label", id: "lblTotal",x : 100, y: 1250, fontsize : "64", fontcolor : "white", align : "left", text : "Total: 10.00010000 DYN"},
 
             { type : "label", x : 1000, y: 1450, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to confirm."},
-
             { type : "textbox", id: "txtPassword", x : 1000, y: 1500, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
 
             { type : "label",  x : 1000, y: 1800, fontsize : "80", fontcolor : "white", align : "center", text : "Are you sure you want to send?"},
@@ -1443,8 +1469,17 @@ function loadWindowLayout() {
             { type : "label",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Use this function to create a QR code to"},
             { type : "label",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "load your wallet on a another device."},
             { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "IMPORTANT: this allows access to all your coins."},
+
+            { type : "label", x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Enter password:"},
+            { type : "textbox", id: "txtPassword", x : 1200, y: 750, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
             
-            { type : "button", id: "cmdXPRVqr", x: 500, y: 750, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Generate Wallet QR"},
+            { type : "button", id: "cmdXPRVqr", x: 500, y: 950, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Generate Wallet QR"},
+
+            { type : "label", id: "countdown",  x : 1000, y: 2300, fontsize : "80", fontcolor : "white", align : "center", text : ""},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false },
+
 
         ]
     };
@@ -1453,6 +1488,30 @@ function loadWindowLayout() {
 }
 
 
+function winSecurity_cmdXPRVqr_click() {
+
+    var password = findControlByID("txtPassword").value;
+    var xprv = decryptXPRV (password);
+
+    if (xprv.startsWith("xprv")) {
+        var qr = new QRCode("divQR", {
+            width: 600,
+            height: 600,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H,
+        });
+
+        qr.clear(); // clear the code.
+        qr.makeCode("http://192.168.1.117:9090/main.html?recover=" + xprv); 
+        QRimg = qr.getImage();
+        QRCountdown = Date.now();
+    }
+    else {
+        Msgbox("Security","Incorrect password");
+    }
+
+}
 
 function winWelcome_cmdCreate_click() {
     currentWindow = windowLayout["setupPage1"];
@@ -1522,9 +1581,12 @@ function winLogin_cmdDone_click() {
     var xprv = decryptXPRV (txtPass);
 
     if (xprv.startsWith("xprv")) {
-
+        xprv = null;
+        
         if (linkAction == "pay") {
             currentWindow = windowLayout["send"];
+            mainMenu_click_Send();
+
             var addr = findControlByID("txtAddr");
             var amt = findControlByID("txtAmount");
 
@@ -1796,10 +1858,10 @@ function winSend_cmdSend_click() {
 
 function winSendConfirm_cmdSend_click() {
 
+
+
     var fromAddr = window.localStorage.getItem("addr0");
     var request = "bridge.php?get_utxo?addr=" + fromAddr + "&amount=" + (globalVars.sendAmt + globalVars.sendFee);
-
-    var password = findControlByID("txtPassword").value;
 
     $.ajax(
         {url: request, success: function(result) {
@@ -1817,9 +1879,18 @@ function winSendConfirm_cmdSend_click() {
                 }
             }
 
-            var password = findControlByID("txtPassword").value;
+            var txtPassword = findControlByID("txtPassword");
+            var password = txtPassword.value;
 
-            sendCoins ( globalVars.sendAddr, globalVars.sendAmt, globalVars.sendFee, utxoSet, password);
+            try {
+                sendCoins ( globalVars.sendAddr, globalVars.sendAmt, globalVars.sendFee, utxoSet, password);
+            }
+            catch (ex) {
+                Msgbox("Error", "Error creating transaction");
+            }
+
+            txtPassword.value = "";
+            password = null;
         }}
     );    
 
@@ -1838,6 +1909,9 @@ function mainMenu_click_Transactions() {
 
 
 function mainMenu_click_Send() {
+
+    currentWindow = windowLayout["send"];
+
     var addr = findControlByID("txtAddr");
     var amt = findControlByID("txtAmount");
     var fee = findControlByID("txtFee");
@@ -1905,12 +1979,12 @@ function loadTransactions() {
             var cAmt = [];
             var cAddr = [];
             var cRect = [];
-            for (var i = 0; i < 9; i++) {
-                cDate[i] = findControlByID("date" + i);
-                cAction[i] = findControlByID("action" + i);
-                cAmt[i] = findControlByID("amt" + i);
-                cAddr[i] = findControlByID("addr" + i);
-                cRect[i] = findControlByID("rect" + i);
+            for (var i = 2; i < 11; i++) {
+                cDate[i] = findControlByID("date" + (i-2));
+                cAction[i] = findControlByID("action" + (i-2));
+                cAmt[i] = findControlByID("amt" + (i-2));
+                cAddr[i] = findControlByID("addr" + (i-2));
+                cRect[i] = findControlByID("rect" + (i-2));
 
                 cDate[i].text = "";
                 cAction[i].text = "";
@@ -1920,17 +1994,36 @@ function loadTransactions() {
             }
 
             var lines = result.split("\n");
-            for (var i = 0; i < 9; i++) {
+
+            var lastBlock = lines[0];
+            var lastBlockTime = formatDate( parseInt(lines[1]) * 1000);
+
+            var control = findControlByID("blocktime");
+            control.text = "Last block: " + lastBlockTime;
+
+            for (var i = 2; i < 11; i++) {
                 if (i < lines.length) {
                     var lineData = lines[i].split(",");
                     if (lineData.length == 4) {
                         var amt = lineData[3];
+
+                        var iAmt = parseInt (amt);
+                        var negative = false;
+                        if (iAmt < 0) {
+                            iAmt = -iAmt;
+                            negative = true;
+                            amt = iAmt.toString();
+                        }
+
                         while (amt.length < 8)
                             amt = "0" + amt;
                         if (amt.length == 8)
                             amt = "0." + amt;
                         else
                             amt = amt.substring(0, amt.length-8) + "." + amt.substring(amt.length-8);
+                        
+                        if (negative)
+                            amt = "-" + amt;
         
                         var timestamp = parseInt(lineData[0], 10);
                         var transDate = new Date(timestamp * 1000);
@@ -1948,6 +2041,8 @@ function loadTransactions() {
         }}
     );
 
+    if (currentWindow.id == "winTransactionHistory")
+        setTimeout(loadTransactions, 5000);
     
 }
 
@@ -1974,6 +2069,11 @@ function loadSummary() {
 
         }}
     );
+
+
+    if (currentWindow.id == "winSummary")
+        setTimeout(loadSummary, 5000);
+
 
 
     /*
@@ -2120,9 +2220,9 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
         $.ajax(
             {url: request, success: function(result) {
                 if (result.length == 64)
-                    Msgbox ("Completion", "Your transaction was submitted.")
+                    Msgbox ("Completion", "Your transaction was submitted.", "mainMenu_click_Send");
                 else
-                    Msgbox ("Error", result);
+                    Msgbox ("Error", result, "mainMenu_click_Send");
 
             }}
         );
