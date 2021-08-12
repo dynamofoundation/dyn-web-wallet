@@ -44,6 +44,10 @@ var linkData = "";
 var QRimg;
 var QRCountdown;
 
+var ajaxPrefix = "bridge.php?";
+var linkPrefix = "https://nft1.dynamocoin.org/";
+//var linkPrefix = "http://192.168.1.117:9090/";
+
 jQuery(onLoad);
 
 
@@ -1414,11 +1418,21 @@ function loadWindowLayout() {
     windowLayout['receive'] = {
         title: "Receive Dynamo",
         focus: "",
-        allowVirtKeyboard: false,
+        allowVirtKeyboard: true,
         keyboardVisible: false,
         id: "winReceive",
         hambugerMenu: true,
         controls : [
+            { type : "label", x : 200, y: 450, fontsize : "96", fontcolor : "white", align : "left", text : "This function will generate a link"},
+            { type : "label", x : 200, y: 550, fontsize : "96", fontcolor : "white", align : "left", text : "which can be shared to request a "},
+            { type : "label", x : 200, y: 650, fontsize : "96", fontcolor : "white", align : "left", text : "payment to your wallet."},
+
+            { type : "label", x : 1000, y: 1150, fontsize : "80", fontcolor : "white", align : "center", text : "Enter request amount or 0 for any amount"},
+            { type : "textbox", id: "txtAmount", x : 1000, y: 1200, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "0" },
+
+            { type : "button", id: "cmdGenerate", x: 1000, y: 1450, w: 900, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Copy to Clipboard"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false },
         ]
     };
 
@@ -1488,6 +1502,33 @@ function loadWindowLayout() {
 }
 
 
+
+function winReceive_cmdGenerate_click() {
+
+    var control = findControlByID("txtAmount");
+    var strAmt = control.value;
+    if (strAmt.startsWith("."))
+        strAmt = "0" + strAmt;
+
+    var textArea = document.getElementById("txtClipboard");
+    var localStorage = window.localStorage;
+    textArea.value = linkPrefix + "main.html?action=pay&data=" + localStorage.getItem("addr0") + "," + strAmt;
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        if (successful)
+            Msgbox("Confirm", "Link copied to clipboard");
+        else
+            Msgbox("Failed", "Link could not be copied to clipboard");
+    } catch (err) {
+        Msgbox("Failed", "Link could not be copied to clipboard");
+    }
+
+}
+
+
 function winSecurity_cmdXPRVqr_click() {
 
     var password = findControlByID("txtPassword").value;
@@ -1503,7 +1544,7 @@ function winSecurity_cmdXPRVqr_click() {
         });
 
         qr.clear(); // clear the code.
-        qr.makeCode("http://192.168.1.117:9090/main.html?recover=" + xprv); 
+        qr.makeCode(linkPrefix + "main.html?recover=" + xprv); 
         QRimg = qr.getImage();
         QRCountdown = Date.now();
     }
@@ -1592,7 +1633,12 @@ function winLogin_cmdDone_click() {
 
             var dataValues = linkData.split(",");
             addr.value = dataValues[0];
-            amt.value = dataValues[1];
+            if (dataValues[1] != "0")
+                amt.value = dataValues[1];
+            else
+                amt.value = "";
+
+            currentWindow.focus = "txtAmount";
             
         }
         else {
@@ -1861,7 +1907,7 @@ function winSendConfirm_cmdSend_click() {
 
 
     var fromAddr = window.localStorage.getItem("addr0");
-    var request = "bridge.php?get_utxo?addr=" + fromAddr + "&amount=" + (globalVars.sendAmt + globalVars.sendFee);
+    var request = ajaxPrefix + "get_utxo?addr=" + fromAddr + "&amount=" + (globalVars.sendAmt + globalVars.sendFee);
 
     $.ajax(
         {url: request, success: function(result) {
@@ -1920,7 +1966,7 @@ function mainMenu_click_Send() {
     fee.value = "0.0001";
 
 
-    var request = "/bridge.php?get_balance?addr=" + window.localStorage.getItem("addr0");
+    var request = ajaxPrefix + "get_balance?addr=" + window.localStorage.getItem("addr0");
 
     $.ajax(
         {url: request, success: function(result) {
@@ -1969,7 +2015,7 @@ function loadTransactions() {
 
     var address = localStorage.getItem("addr0");
 
-    var request = "/bridge.php?get_transactions?addr=" + address + "&start=0";
+    var request = ajaxPrefix + "get_transactions?addr=" + address + "&start=0";
 
     $.ajax(
         {url: request, success: function(result) {
@@ -2054,7 +2100,7 @@ function loadSummary() {
     var control = findControlByID("address");
     control.text = localStorage.getItem("addr0");
 
-    var request = "/bridge.php?get_balance?addr=" + control.text;
+    var request = ajaxPrefix + "get_balance?addr=" + control.text;
 
     $.ajax(
         {url: request, success: function(result) {
@@ -2215,7 +2261,7 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
         const tx = psbt.extractTransaction();
         var strHexTransaction = tx.toHex();
 
-        var request = "/bridge.php?send_tx?hex=" + strHexTransaction;
+        var request = ajaxPrefix + "send_tx?hex=" + strHexTransaction;
 
         $.ajax(
             {url: request, success: function(result) {
