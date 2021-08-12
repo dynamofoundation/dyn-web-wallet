@@ -459,7 +459,10 @@ function processClickMenu (px, py) {
         currentWindow = windowLayout[windows[i]];
         menuExpanded = false;
 
-        if (windows[i] == "transactions")
+        if (windows[i] == "summary")
+        mainMenu_click_Summary();
+
+        else if (windows[i] == "transactions")
             mainMenu_click_Transactions();
 
         else if (windows[i] == "send")
@@ -584,7 +587,10 @@ function processTextboxKeypress (control, key) {
 }
 
 function pointInTextbox ( x, y, control ) {
-    return pointInRect ( x, y, control.x - control.w / 2, control.y, control.w, control.h);
+    if (control.align == "center")
+        return pointInRect ( x, y, control.x - control.w / 2, control.y, control.w, control.h);
+    else
+    return pointInRect ( x, y, control.x, control.y, control.w, control.h);
 }
 
 
@@ -1369,9 +1375,9 @@ function loadWindowLayout() {
 
             { type : "label", x : 1000, y: 1450, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to confirm."},
 
-            { type : "textbox", id: "txtPassword", x : 1000, y: 1600, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+            { type : "textbox", id: "txtPassword", x : 1000, y: 1500, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
 
-            { type : "label", id: "balance",  x : 1000, y: 1800, fontsize : "80", fontcolor : "white", align : "center", text : "Are you sure you want to send?"},
+            { type : "label",  x : 1000, y: 1800, fontsize : "80", fontcolor : "white", align : "center", text : "Are you sure you want to send?"},
 
             { type : "button", id: "cmdSend", x: 1000, y: 1900, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Send"},
 
@@ -1434,9 +1440,9 @@ function loadWindowLayout() {
         hambugerMenu: true,
         controls : [
 
-            { type : "label", id: "balance",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Use this function to create a QR code to"},
-            { type : "label", id: "balance",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "load your wallet on a another device."},
-            { type : "label", id: "balance",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "IMPORTANT: this allows access to all your coins."},
+            { type : "label",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Use this function to create a QR code to"},
+            { type : "label",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "load your wallet on a another device."},
+            { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "IMPORTANT: this allows access to all your coins."},
             
             { type : "button", id: "cmdXPRVqr", x: 500, y: 750, w: 800, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Generate Wallet QR"},
 
@@ -1801,11 +1807,14 @@ function winSendConfirm_cmdSend_click() {
             var utxoSet = [];
             var lines = result.split("\n");
             for ( var i = 0; i < lines.length; i++) {
-                var utxo = new Object();
-                utxo.txID = lines[i][0];
-                utxo.vout = parseInt (lines[i][1]);
-                utxo.amount = parseInt (lines[i][2]);
-                utxoSet.push(utxo);
+                var element = lines[i].split(",");
+                if (element.length == 3) {
+                    var utxo = new Object();
+                    utxo.txID = element[0];
+                    utxo.vout = parseInt (element[1]);
+                    utxo.amount = parseInt (element[2]);
+                    utxoSet.push(utxo);
+                }
             }
 
             var password = findControlByID("txtPassword").value;
@@ -1815,6 +1824,11 @@ function winSendConfirm_cmdSend_click() {
     );    
 
 
+}
+
+
+function mainMenu_click_Summary() {
+    loadSummary();
 }
 
 
@@ -1830,6 +1844,23 @@ function mainMenu_click_Send() {
     addr.value = "";
     amt.value = "";
     fee.value = "0.0001";
+
+
+    var request = "/bridge.php?get_balance?addr=" + window.localStorage.getItem("addr0");
+
+    $.ajax(
+        {url: request, success: function(result) {
+            while (result.length < 8)
+                result = "0" + result;
+            if (result.length == 8)
+                result = "0." + result;
+            else
+                result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
+            var control = findControlByID("balance");
+            control.text = "Balance: " + result + " DYN";
+
+        }}
+    );    
 
 }
 
@@ -1862,10 +1893,9 @@ function loadTransactions() {
 
     var localStorage = window.localStorage;
 
-    var control = findControlByID("address");
-    control.text = localStorage.getItem("addr0");
+    var address = localStorage.getItem("addr0");
 
-    var request = "/bridge.php?get_transactions?addr=dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy&start=0";
+    var request = "/bridge.php?get_transactions?addr=" + address + "&start=0";
 
     $.ajax(
         {url: request, success: function(result) {
@@ -1893,24 +1923,25 @@ function loadTransactions() {
             for (var i = 0; i < 9; i++) {
                 if (i < lines.length) {
                     var lineData = lines[i].split(",");
+                    if (lineData.length == 4) {
+                        var amt = lineData[3];
+                        while (amt.length < 8)
+                            amt = "0" + amt;
+                        if (amt.length == 8)
+                            amt = "0." + amt;
+                        else
+                            amt = amt.substring(0, amt.length-8) + "." + amt.substring(amt.length-8);
+        
+                        var timestamp = parseInt(lineData[0], 10);
+                        var transDate = new Date(timestamp * 1000);
+                        var strDate = formatDate(transDate);
 
-                    var amt = lineData[3];
-                    while (amt.length < 8)
-                        amt = "0" + amt;
-                    if (amt.length == 8)
-                        amt = "0." + amt;
-                    else
-                        amt = amt.substring(0, amt.length-8) + "." + amt.substring(amt.length-8);
-    
-                    var timestamp = parseInt(lineData[0], 10);
-                    var transDate = new Date(timestamp * 1000);
-                    var strDate = formatDate(transDate);
-
-                    cDate[i].text = strDate;
-                    cAction[i].text = lineData[1];
-                    cAmt[i].text = amt;
-                    cAddr[i].text = lineData[2];
-                    cRect[i].visible = true;    
+                        cDate[i].text = strDate;
+                        cAction[i].text = lineData[1];
+                        cAmt[i].text = amt;
+                        cAddr[i].text = lineData[2];
+                        cRect[i].visible = true;   
+                    } 
                 }
             }
 
@@ -1928,7 +1959,7 @@ function loadSummary() {
     var control = findControlByID("address");
     control.text = localStorage.getItem("addr0");
 
-    var request = "/bridge.php?get_balance?addr=dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy";
+    var request = "/bridge.php?get_balance?addr=" + control.text;
 
     $.ajax(
         {url: request, success: function(result) {
@@ -2047,40 +2078,60 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
 
     var xprv = decryptXPRV (password);
 
-    var root = DynWallet.bip32.fromBase58(xprv, network);
-    var child = root.derivePath("m/0'/0'/0'");
-    const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(child.publicKey, { network: network });
-    const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
+    if (xprv.startsWith("xprv")) {
 
-    var psbt = new DynWallet.bitcoin.Psbt();
+        var root = DynWallet.bip32.fromBase58(xprv, network);
+        var child = root.derivePath("m/0'/0'/0'");
+        const ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(child.publicKey, { network: network });
+        const p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
 
-    psbt.addOutput ( {address: destAddr, value : amount});
+        var psbt = new DynWallet.bitcoin.Psbt();
 
-    var totalAmt = 0;
-    for ( var i = 0; i < utxoSet.length; i++ ) 
-        totalAmt += utxoSet[i].amount;
+        psbt.addOutput ( {address: destAddr, value : amount});
 
-    var changeAmt = totalAmt - amount - fee;
-    var changeAddr = window.localStorage.getItem("addr0");
+        var totalAmt = 0;
+        for ( var i = 0; i < utxoSet.length; i++ ) 
+            totalAmt += utxoSet[i].amount;
 
-    psbt.addOutput ( {address: changeAddr, value : changeAmt});
+        var changeAmt = totalAmt - amount - fee;
+        var changeAddr = window.localStorage.getItem("addr0");
 
-    for ( var i = 0; i < utxoSet.length; i++ ) {
-        psbt.addInput ( {
-            hash: utxoSet[i].txID,
-            index: utxoSet[i].vout,
-            witnessUtxo: {
-              script: p2wpkh.output,
-              value: utxoSet[i].amount,
-            }
-        } );        
-        psbt.signInput(i, child);
-        psbt.validateSignaturesOfInput(i, child.publicKey);
+        psbt.addOutput ( {address: changeAddr, value : changeAmt});
+
+        for ( var i = 0; i < utxoSet.length; i++ ) {
+            psbt.addInput ( {
+                hash: utxoSet[i].txID,
+                index: utxoSet[i].vout,
+                witnessUtxo: {
+                script: p2wpkh.output,
+                value: utxoSet[i].amount,
+                }
+            } );        
+            psbt.signInput(i, child);
+            psbt.validateSignaturesOfInput(i, child.publicKey);
+        }
+
+        psbt.finalizeAllInputs();
+        const tx = psbt.extractTransaction();
+        var strHexTransaction = tx.toHex();
+
+        var request = "/bridge.php?send_tx?hex=" + strHexTransaction;
+
+        $.ajax(
+            {url: request, success: function(result) {
+                if (result.length == 64)
+                    Msgbox ("Completion", "Your transaction was submitted.")
+                else
+                    Msgbox ("Error", result);
+
+            }}
+        );
+    
+
     }
-
-    psbt.finalizeAllInputs();
-    const tx = psbt.extractTransaction();
-    var strHexTransaction = tx.toHex();
+    else {
+        Msgbox("Security", "Invalid password");
+    }
 }
 
 /*
