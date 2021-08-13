@@ -48,6 +48,11 @@ var ajaxPrefix = "bridge.php?";
 var linkPrefix = "https://nft1.dynamocoin.org/";
 //var linkPrefix = "http://192.168.1.117:9090/";
 
+
+var imageUploadArray;
+var imageUploadArrayValid;
+
+
 jQuery(onLoad);
 
 
@@ -141,6 +146,10 @@ function initEventHandlers() {
         event.preventDefault();
     });    
 
+
+    var loader = document.getElementById("uploadFile");
+    loader.addEventListener("change", event_upload_files, false);
+
 }
 
 function event_keypress(event) {
@@ -153,6 +162,20 @@ function event_mouseup(event) {
     processClickEvent (event.offsetX, event.offsetY);
 }
 
+
+function event_upload_files () {
+    const file = this.files[0];
+
+    var fr = new FileReader();
+    fr.onload = function() {
+      var data = fr.result;
+      imageUploadArray = new Int8Array(data);
+      imageUploadArrayValid = true;
+    };
+    fr.readAsArrayBuffer(file);    
+
+
+}
 
 
 function processKeyEvent (keyCode) {
@@ -229,8 +252,12 @@ function processClickEvent ( x, y ) {
             functionName = currentWindow.id + "_" + control.id + "_click";
             window[functionName]();
         }
-        else if (control.type == "drawing")
+        else if (control.type == "drawing") {
             processDrawingClick(control, px, py);
+        }
+        else if (control.type == "combo") {
+                currentWindow.focus = control.id;
+        }
     }
 
 }
@@ -269,6 +296,8 @@ function findControlByXY (x, y) {
             found = pointInButton (x, y, control);
         else if (control.type == "drawing")
             found = pointInDrawing (x, y, control);
+        else if (control.type == "combo")
+            found = pointInCombo (x, y, control);
 
         if (!found)
             i++;
@@ -431,23 +460,28 @@ function drawMenu() {
         roundRect(mainContext, menuX, menuY + menuH, 1000, menuY + menuH + 1750, 10, true, true);
 
 
-        var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT", "Security"];
+        var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT", "Security", "Auction NFT", "Buy NFT", "Play to Earn"];
+
+        mainContext.strokeStyle = "rgb(0, 0, 0)";
+        mainContext.lineWidth = 10;
+        mainContext.fillStyle = "rgb(240, 240, 250)";
+        roundRect(mainContext, menuX, menuY + menuH, 1000, menuY + menuH + (menuItems.length-1) * 220, 10, true, true);        
 
         for ( var i = 0; i < menuItems.length; i++ ) {
             mainContext.font = '96px ' + globalFont;
             mainContext.fillStyle = "black";
             mainContext.textAlign = "left";
-            mainContext.fillText (menuItems[i], 100, 400 + i * 250);
+            mainContext.fillText (menuItems[i], 100, 400 + i * 220);
             mainContext.beginPath();
-            mainContext.moveTo(80, 500 + i * 250);
-            mainContext.lineTo(1080, 500 + i * 250);
+            mainContext.moveTo(80, 500 + i * 220);
+            mainContext.lineTo(1080, 500 + i * 220);
             mainContext.closePath();
             mainContext.stroke();
             var location = new Object();
             location.x = 80;
-            location.y = 250 + i * 250;
+            location.y = 250 + i * 220;
             location.w = 1000;
-            location.h = 250;
+            location.h = 220;
             menuItemLocations[i] = location;
         }
 
@@ -483,7 +517,7 @@ function processClickMenu (px, py) {
             i++;
 
     if (found) {
-        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft", "security"];
+        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft", "security", "auctionnft", "buynft", "playtoearn"];
         currentWindow = windowLayout[windows[i]];
         menuExpanded = false;
 
@@ -495,6 +529,9 @@ function processClickMenu (px, py) {
 
         else if (windows[i] == "send")
             mainMenu_click_Send();
+
+        else if (windows[i] == "createnft")
+            mainMenu_click_createNFT();
 
     }
 
@@ -521,6 +558,9 @@ function drawWindow () {
 
         else if (control.type == "rect")
             drawRect (control);
+            
+        else if (control.type == "combo")
+            drawCombo (control);
             
     }
 
@@ -621,6 +661,63 @@ function pointInTextbox ( x, y, control ) {
     return pointInRect ( x, y, control.x, control.y, control.w, control.h);
 }
 
+
+
+
+//////////////////////////  Combo
+
+function drawCombo ( control ) {
+
+    var x;
+    if (control.align == "left")
+        x = control.x;
+    else
+        x = control.x - control.w / 2;
+
+    mainContext.strokeStyle = "rgb(128, 128, 128)";
+    mainContext.lineWidth = 5;
+    mainContext.fillStyle = "rgb(200, 200, 200)";
+    roundRect(mainContext, x, control.y, control.w, control.h, 30, true, false);
+
+    if (control.selectedItem != -1) {
+        mainContext.font = control.fontsize + 'px ' + globalFont;
+        mainContext.fillStyle = control.fontcolor;
+        mainContext.textAlign = "left";
+        mainContext.fillText ( control.items[control.selectedItem], x + control.texthorizoffset, control.y + control.textvertoffset );        
+    }
+
+
+    var x = control.x;
+    var y = control.y;
+    var w = control.w;
+    // the triangle
+    mainContext.beginPath();
+    mainContext.moveTo(x+w-100, y+30);
+    mainContext.lineTo(x+w-30, y+30);
+    mainContext.lineTo(x+w-65, y+80);
+    mainContext.closePath();
+
+    // the outline
+    mainContext.lineWidth = 10;
+    mainContext.strokeStyle = '#666666';
+    mainContext.stroke();
+
+    // the fill color
+    mainContext.fillStyle = "#101010";
+    mainContext.fill();
+
+
+}
+
+
+function pointInCombo ( x, y, control ) {
+    if (!control.expanded) {
+        if (control.align == "center")
+            return pointInRect ( x, y, control.x - control.w / 2, control.y, control.w, control.h);
+        else
+        return pointInRect ( x, y, control.x, control.y, control.w, control.h);
+    }
+}
 
 
 ////////////////////////   Button
@@ -1467,11 +1564,33 @@ function loadWindowLayout() {
     windowLayout['createnft'] = {
         title: "Create NFT",
         focus: "",
-        allowVirtKeyboard: false,
+        allowVirtKeyboard: true,
         keyboardVisible: false,
         id: "winCreateNFT",
         hambugerMenu: true,
         controls : [
+            { type : "label", x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Asset Class"},
+            { type : "combo", id: "cmbSelectAssetClass", x : 600, y: 370, w: 800, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : 0, expanded: false, items: []},
+            { type : "button", id: "cmdNewAssetClass", x: 1700, y: 370, w: 300, h: 120, fontsize: 80, fontcolor: "black", textvertoffset: 25, caption: "New"},
+
+            { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "Serial #:"},
+            { type : "textbox", id: "txtSerial", x : 500, y: 550, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
+
+            { type : "label",  x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Metadata:"},
+            { type : "textbox", id: "txtMeta", x : 500, y: 750, w: 1400, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
+
+            { type : "label",  x : 100, y: 1100, fontsize : "80", fontcolor : "white", align : "left", text : "Asset binary:"},
+            { type : "button", id: "cmdUpload", x: 800, y: 1000, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Upload"},
+            { type : "label",  id: "lblUploadFile", x : 100, y: 1100, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+
+            { type : "label",  x : 100, y: 1350, fontsize : "80", fontcolor : "white", align : "left", text : "Fee:"},
+            { type : "textbox", id: "txtFee", x : 500, y: 1250, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "0.0001" },
+            { type : "label",  x : 1320, y: 1350, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
+
+            { type : "button", id: "cmdCreate", x: 1000, y: 1550, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false },
+
         ]
     };
 
@@ -1525,10 +1644,47 @@ function loadWindowLayout() {
         ]
     };
 
+    windowLayout['auctionnft'] = {
+        title: "List NFT for Sale",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winAuctionNFT",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };    
+
+    windowLayout['buynft'] = {
+        title: "Buy from NFT Marketplace",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winBuyNFT",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };    
+
+    windowLayout['playtoearn'] = {
+        title: "Play to Earn",
+        focus: "",
+        allowVirtKeyboard: false,
+        keyboardVisible: false,
+        id: "winPlayToEarn",
+        hambugerMenu: true,
+        controls : [
+        ]
+    };    
+
 
 }
 
 
+function winCreateNFT_cmdUpload_click() {
+    var loader = document.getElementById("uploadFile");
+    loader.click();
+}
 
 function winReceive_cmdGenerate_click() {
 
@@ -1994,6 +2150,57 @@ function mainMenu_click_Summary() {
 
 function mainMenu_click_Transactions() {
     loadTransactions();
+}
+
+
+
+function mainMenu_click_createNFT() {
+    imageUploadArrayValid = false;
+
+    var control = findControlByID("cmbSelectAssetClass");
+    control.selectedItem = -1;
+    control.expanded = false;
+    control.items = [];
+
+    control = findControlByID("txtSerial");
+    control.value = "";
+
+    control = findControlByID("txtMeta");
+    control.value = "";
+
+    control = findControlByID("lblUploadFile");
+    control.text = "";
+
+    control = findControlByID("txtFee");
+    control.value = "0.0001";
+
+}
+
+
+winCreateNFT_cmdCreate_click() {
+
+    var iSerial = parseInt(findControlByID("txtSerial").value);
+
+    if (iSerial < 1) {
+        Msgbox("Validation", "Serial number must be greater than 0");
+        return;
+    }
+
+    if (imageUploadArrayValid) {
+        if (imageUploadArray.length > 16,777,215) {
+            Msgbox("Validation", "Max binary size of 16mb");
+            return;    
+        }
+    }
+
+    var iFee = parseInt(findControlByID("txtFee").value);
+
+    if (iFee <= 0) {
+        Msgbox("Validation", "Fee must be greater than zero");
+        return;
+    }
+
+
 }
 
 
