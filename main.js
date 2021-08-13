@@ -2285,7 +2285,8 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
         var changeAmt = totalAmt - amount - fee;
         var changeAddr = window.localStorage.getItem("addr0");
 
-        psbt.addOutput ( {address: changeAddr, value : changeAmt});
+        if (changeAmt > 0)
+            psbt.addOutput ( {address: changeAddr, value : changeAmt});
 
         for ( var i = 0; i < utxoSet.length; i++ ) {
             psbt.addInput ( {
