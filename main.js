@@ -1107,10 +1107,37 @@ function loadWindowLayout() {
             { type : "textbox", id: "word10", x : 1000, y: 1430, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
             { type : "textbox", id: "word11", x : 1000, y: 1580, w: 900, h: 140, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
 
-            { type : "button", id: "cmdDone", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
+            { type : "button", id: "cmdDone", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"},
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false }
 
+            
+        ]
+    };
+
+
+    windowLayout['importPassword'] = {
+        title: "Create Password",
+        focus: "txtPassword1",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winImportPassword",
+        hambugerMenu: false,
+        controls : [
+            { type : "label", x : 1000, y: 450, fontsize : "128", fontcolor : "white", align : "center", text : "Create Wallet Password"},
+            { type : "label", x : 1000, y: 600, fontsize : "80", fontcolor : "white", align : "center", text : "Enter a password that is easy to remember,"},
+            { type: "label", x : 1000, y: 700, fontsize : "80", fontcolor : "white", align : "center", text : "but hard to guess.  This password will be used"},
+            { type : "label", x : 1000, y: 800, fontsize : "80", fontcolor : "white", align : "center", text : "to unlock your wallet.  If you lose your password,"},
+            { type : "label", x : 1000, y: 900, fontsize : "80", fontcolor : "white", align : "center", text : "it cannot be recovered by any means."},
+            { type : "label", x : 1000, y: 1200, fontsize : "80", fontcolor : "white", align : "center", text : "Enter password"},
+            { type : "label", x : 1000, y: 1600, fontsize : "80", fontcolor : "white", align : "center", text : "Re-enter password"},
+
+            { type : "textbox", id: "txtPassword1", x : 1000, y: 1300, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+            { type : "textbox", id: "txtPassword2", x : 1000, y: 1700, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
+            { type : "button", id: "cmdDone", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false }
             
         ]
     };
@@ -1593,8 +1620,25 @@ function winImport_cmdDone_click() {
     var node = DynWallet.bip32.fromSeed(masterSeed);
     globalVars.xprv = node.toBase58();
 
-    currentWindow = windowLayout["summary"];
-    loadSummary();
+    currentWindow = windowLayout["importPassword"];
+
+}
+
+function winImportPassword_cmdDone_click() {
+
+    var txtPass1 = findControlByID("txtPassword1");
+    var txtPass2 = findControlByID("txtPassword2");
+
+    if ((txtPass1.value.length == 0) || (txtPass2.value.length == 0))
+        Msgbox ("Validation", "Password cannot be empty");
+    else if (txtPass1.value != txtPass2.value)
+        Msgbox ("Validation", "Passwords do not match");
+    else {
+        globalVars.plaintextPassword = txtPass1.value;
+        setupWallet();
+        currentWindow = windowLayout["summary"];
+        loadSummary();
+    }
 
 }
 
@@ -1663,7 +1707,6 @@ function winSetupPage1_cmdNext_click() {
         Msgbox ("Validation", "Passwords do not match");
     else {
         globalVars.plaintextPassword = txtPass1.value;
-        globalVars.passwordHash = CryptoJS.SHA256(txtPass1.value);
         currentWindow = windowLayout["setupPage2"];
     }
 }
