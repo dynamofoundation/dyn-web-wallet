@@ -111,13 +111,17 @@ function onLoad() {
     loadImages();
     loadWindowLayout()
     initEventHandlers();
-   
-    var storage = window.localStorage;
-    if (storage.getItem ('xprv') === null)
-        currentWindow = windowLayout["welcome"];
-    else
-        currentWindow = windowLayout["login"];  
 
+    if (linkAction == "recover") {
+        currentWindow = windowLayout["welcome"];
+    }
+    else {
+        var storage = window.localStorage;
+        if (storage.getItem ('xprv') === null)
+            currentWindow = windowLayout["welcome"];
+        else
+            currentWindow = windowLayout["login"];  
+    }
     setTimeout( renderLoop, 500 );
 
 }
@@ -1644,6 +1648,35 @@ function loadWindowLayout() {
         ]
     };
 
+
+    windowLayout['recover'] = {
+        title: "Wallet Recovery",
+        focus: "",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winRecover",
+        hambugerMenu: true,
+        controls : [
+
+            { type : "label",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "You are about to recover your wallet using the"},
+            { type : "label",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "master private key.  This will overwrite any "},
+            { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "existing wallet in this browser.  Enter the "},
+            { type : "label",  x : 100, y: 750, fontsize : "80", fontcolor : "white", align : "left", text : "password you would like to use below."},
+
+            { type : "label", x : 1000, y: 1200, fontsize : "80", fontcolor : "white", align : "center", text : "Enter password"},
+            { type : "label", x : 1000, y: 1600, fontsize : "80", fontcolor : "white", align : "center", text : "Re-enter password"},
+
+            { type : "textbox", id: "txtPassword1", x : 1000, y: 1300, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+            { type : "textbox", id: "txtPassword2", x : 1000, y: 1700, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
+            { type : "button", id: "cmdDone", x: 1000, y: 1900, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Done"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false },
+
+
+        ]
+    };
+
     windowLayout['auctionnft'] = {
         title: "List NFT for Sale",
         focus: "",
@@ -2174,10 +2207,12 @@ function mainMenu_click_createNFT() {
     control = findControlByID("txtFee");
     control.value = "0.0001";
 
+
+
 }
 
 
-winCreateNFT_cmdCreate_click() {
+function winCreateNFT_cmdCreate_click() {
 
     var iSerial = parseInt(findControlByID("txtSerial").value);
 
