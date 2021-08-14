@@ -113,7 +113,7 @@ function onLoad() {
     initEventHandlers();
 
     if (linkAction == "recover") {
-        currentWindow = windowLayout["welcome"];
+        currentWindow = windowLayout["recover"];
     }
     else {
         var storage = window.localStorage;
@@ -1714,6 +1714,26 @@ function loadWindowLayout() {
 }
 
 
+
+function winRecover_cmdDone_click() {
+
+    var txtPass1 = findControlByID("txtPassword1");
+    var txtPass2 = findControlByID("txtPassword2");
+
+    if ((txtPass1.value.length == 0) || (txtPass2.value.length == 0))
+        Msgbox ("Validation", "Password cannot be empty");
+    else if (txtPass1.value != txtPass2.value)
+        Msgbox ("Validation", "Passwords do not match");
+    else {
+        globalVars.plaintextPassword = txtPass1.value;
+        globalVars.xprv = linkData
+        setupWallet();
+        currentWindow = windowLayout["summary"];
+        loadSummary();
+    }
+
+}
+
 function winCreateNFT_cmdUpload_click() {
     var loader = document.getElementById("uploadFile");
     loader.click();
@@ -1760,7 +1780,7 @@ function winSecurity_cmdXPRVqr_click() {
         });
 
         qr.clear(); // clear the code.
-        qr.makeCode(linkPrefix + "main.html?recover=" + xprv); 
+        qr.makeCode(linkPrefix + "main.html?action=recover&data=" + xprv); 
         QRimg = qr.getImage();
         QRCountdown = Date.now();
     }
@@ -2454,7 +2474,6 @@ function setupWallet() {
     var addr = script.address;
 
     storage.setItem ('addr0', addr);
-
 
 }
 
