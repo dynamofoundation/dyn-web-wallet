@@ -2558,9 +2558,13 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
                 value: utxoSet[i].amount,
                 }
             } );        
+        }
+
+        for ( var i = 0; i < utxoSet.length; i++ ) {
             psbt.signInput(i, child);
             psbt.validateSignaturesOfInput(i, child.publicKey);
         }
+
 
         psbt.finalizeAllInputs();
         const tx = psbt.extractTransaction();
