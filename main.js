@@ -157,6 +157,10 @@ function initEventHandlers() {
 
 }
 
+
+
+
+
 function event_keypress(event) {
     if (event.altKey || event.ctrlKey)
         return;
@@ -1420,61 +1424,61 @@ function loadWindowLayout() {
         id: "winTransactionHistory",
         hambugerMenu: true,
         controls : [
-            { type : "label", id: "date0",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action0",  x : 950, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt0",  x : 1200, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr0",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date0",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action0",  x : 950, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt0",  x : 1200, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr0",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect0", x: 80, y: 350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date1",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action1",  x : 950, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt1",  x : 1200, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr1",  x : 100, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date1",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action1",  x : 950, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt1",  x : 1200, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr1",  x : 100, y: 800, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect1", x: 80, y: 600, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date2",  x : 100, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action2",  x : 950, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt2",  x : 1200, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr2",  x : 100, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date2",  x : 100, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action2",  x : 950, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt2",  x : 1200, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr2",  x : 100, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect2", x: 80, y: 850, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date3",  x : 100, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action3",  x : 950, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt3",  x : 1200, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr3",  x : 100, y: 1300, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date3",  x : 100, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action3",  x : 950, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt3",  x : 1200, y: 1200, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr3",  x : 100, y: 1300, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect3", x: 80, y: 1100, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date4",  x : 100, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action4",  x : 950, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt4",  x : 1200, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr4",  x : 100, y: 1550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date4",  x : 100, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action4",  x : 950, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt4",  x : 1200, y: 1450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr4",  x : 100, y: 1550, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect4", x: 80, y: 1350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date5",  x : 100, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action5",  x : 950, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt5",  x : 1200, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr5",  x : 100, y: 1800, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date5",  x : 100, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action5",  x : 950, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt5",  x : 1200, y: 1700, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr5",  x : 100, y: 1800, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect5", x: 80, y: 1600, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date6",  x : 100, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action6",  x : 950, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt6",  x : 1200, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr6",  x : 100, y: 2050, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date6",  x : 100, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action6",  x : 950, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt6",  x : 1200, y: 1950, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr6",  x : 100, y: 2050, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect6", x: 80, y: 1850, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date7",  x : 100, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action7",  x : 950, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt7",  x : 1200, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr7",  x : 100, y: 2300, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date7",  x : 100, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action7",  x : 950, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt7",  x : 1200, y: 2200, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr7",  x : 100, y: 2300, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect7", x: 80, y: 2100, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "date8",  x : 100, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : "2021-08-10 16:23:45"},
-            { type : "label", id: "action8",  x : 950, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : "Send"},
-            { type : "label", id: "amt8",  x : 1200, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : "10,000.00000000"},
-            { type : "label", id: "addr8",  x : 100, y: 2550, fontsize : "80", fontcolor : "white", align : "left", text : "dy1qzvx3yfrucqa2ntsw8e7dyzv6u6dl2c2wjvx5jy"},
+            { type : "label", id: "date8",  x : 100, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "action8",  x : 950, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "amt8",  x : 1200, y: 2450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "addr8",  x : 100, y: 2550, fontsize : "80", fontcolor : "white", align : "left", text : ""},
             { type: "rect", id: "rect8", x: 80, y: 2350, w: 1800, h: 250, color: "white", lineSize : 4, visible: true}, 
 
-            { type : "label", id: "blocktime",  x : 1000, y: 2800, fontsize : "80", fontcolor : "white", align : "center", text : "2021-08-10 16:23:45"},
+            { type : "label", id: "blocktime",  x : 1000, y: 2800, fontsize : "80", fontcolor : "white", align : "center", text : ""},
 
             { type : "button", id: "cmdPrev", x: 250, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Prev"},
             { type : "button", id: "cmdNext", x: 1750, y: 2750, w: 250, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Next"}
@@ -1492,7 +1496,7 @@ function loadWindowLayout() {
         hambugerMenu: true,
         controls : [
 
-            { type : "label", id: "balance",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Available balance: 10000.00000000 DYN"},
+            { type : "label", id: "balance",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : ""},
 
             { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "Amount:"},
             { type : "textbox", id: "txtAmount", x : 500, y: 550, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
@@ -2261,6 +2265,30 @@ function winCreateNFT_cmdCreate_click() {
 }
 
 
+function loadSend() {
+    var storage = window.localStorage;
+    var request = ajaxPrefix + "get_balance?addr=" + storage.getItem("addr0");
+
+    $.ajax(
+        {url: request, success: function(result) {
+            if (currentWindow.id == "winSend") {
+                while (result.length < 8)
+                    result = "0" + result;
+                if (result.length == 8)
+                    result = "0." + result;
+                else
+                    result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
+                var control = findControlByID("balance");
+                control.text = "Balance: " + result + " DYN";
+            }
+        }}
+    );    
+
+    if (currentWindow.id == "winSend")
+        setTimeout(loadSend, 5000);
+
+}
+
 function mainMenu_click_Send() {
 
     currentWindow = windowLayout["send"];
@@ -2272,22 +2300,8 @@ function mainMenu_click_Send() {
     amt.value = "";
     fee.value = "0.0001";
 
+    loadSend();
 
-    var request = ajaxPrefix + "get_balance?addr=" + window.localStorage.getItem("addr0");
-
-    $.ajax(
-        {url: request, success: function(result) {
-            while (result.length < 8)
-                result = "0" + result;
-            if (result.length == 8)
-                result = "0." + result;
-            else
-                result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
-            var control = findControlByID("balance");
-            control.text = "Balance: " + result + " DYN";
-
-        }}
-    );    
 
 }
 
@@ -2427,14 +2441,16 @@ function loadSummary() {
 
     $.ajax(
         {url: request, success: function(result) {
-            while (result.length < 8)
-                result = "0" + result;
-            if (result.length == 8)
-                result = "0." + result;
-            else
-                result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
-            var control = findControlByID("balance");
-            control.text = "Balance: " + result + " DYN";
+            if (currentWindow.id == "winSummary") {
+                while (result.length < 8)
+                    result = "0" + result;
+                if (result.length == 8)
+                    result = "0." + result;
+                else
+                    result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
+                var control = findControlByID("balance");
+                control.text = "Balance: " + result + " DYN";
+            }
 
         }}
     );
