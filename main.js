@@ -52,6 +52,7 @@ var linkPrefix = "https://nft1.dynamocoin.org/";
 var imageUploadArray;
 var imageUploadArrayValid;
 
+var transactionHistoryStart;
 
 jQuery(onLoad);
 
@@ -526,7 +527,7 @@ function processClickMenu (px, py) {
         menuExpanded = false;
 
         if (windows[i] == "summary")
-        mainMenu_click_Summary();
+            mainMenu_click_Summary();
 
         else if (windows[i] == "transactions")
             mainMenu_click_Transactions();
@@ -2203,6 +2204,7 @@ function mainMenu_click_Summary() {
 
 function mainMenu_click_Transactions() {
     loadTransactions();
+    transactionHistoryStart = 0;
 }
 
 
@@ -2314,13 +2316,29 @@ function formatDate(date) {
 }
 
 
+function winTransactionHistory_cmdNext_click() {
+    transactionHistoryStart += 9;
+    loadTransactions();
+}
+
+function winTransactionHistory_cmdPrev_click() {
+    transactionHistoryStart -= 9;
+    if (transactionHistoryStart < 0) {
+        transactionHistoryStart  = 0;
+        Msgbox("", "Already at start");
+    }
+
+    loadTransactions();
+}
+
+
 function loadTransactions() {
 
     var localStorage = window.localStorage;
 
     var address = localStorage.getItem("addr0");
 
-    var request = ajaxPrefix + "get_transactions?addr=" + address + "&start=0";
+    var request = ajaxPrefix + "get_transactions?addr=" + address + "&start=" + transactionHistoryStart;
 
     $.ajax(
         {url: request, success: function(result) {
