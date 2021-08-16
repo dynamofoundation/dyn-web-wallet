@@ -1603,6 +1603,31 @@ function loadWindowLayout() {
         ]
     };
 
+    windowLayout['createnftclass'] = {
+        title: "Create NFT Class",
+        focus: "",
+        allowVirtKeyboard: true,
+        keyboardVisible: false,
+        id: "winCreateNFTClass",
+        hambugerMenu: true,
+        controls : [
+            { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "Max Serial #:"},
+            { type : "textbox", id: "txtSerial", x : 600, y: 550, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
+
+            { type : "label",  x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Metadata:"},
+            { type : "textbox", id: "txtMeta", x : 600, y: 750, w: 1300, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
+
+            { type : "label",  x : 100, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "Fee:"},
+            { type : "textbox", id: "txtFee", x : 600, y: 950, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "0.0001" },
+            { type : "label",  x : 1420, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
+
+            { type : "button", id: "cmdCreate", x: 1000, y: 1350, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
+
+            { type: "keyboard", id: "keyboard", mode: 0, shift: false },
+
+        ]
+    };    
+
     windowLayout['sendnft'] = {
         title: "Send NFT",
         focus: "",
@@ -1719,6 +1744,39 @@ function loadWindowLayout() {
 }
 
 
+function winCreateNFTClass_cmdCreate_click() {
+
+    var txtMaxSerial = findControlByID("txtMaxSerial");
+    if (txtMaxSerial.value.length == 0) {
+        Msgbox ("Validation", "Max serial must be 0 or more");
+        return;
+    }
+
+    var iMaxSerial = parseInt(txtMaxSerial.value);
+
+    if (iMaxSerial < 0) {
+        Msgbox ("Validation", "Max serial must be 0 or more");
+        return;
+    }
+
+
+
+    var request = ajaxPrefix + "create_nft_class?hash=" + list[i];
+
+    $.ajax(
+        {url: request, success: function(result) {
+            
+        }}
+    );       
+
+
+
+}
+
+
+function winCreateNFT_cmdNewAssetClass_click() {
+    currentWindow = windowLayout['createnftclass'];
+}
 
 function winRecover_cmdDone_click() {
 
@@ -2234,6 +2292,36 @@ function mainMenu_click_createNFT() {
     control.value = "0.0001";
 
 
+    var storage = window.localStorage;
+    var request = ajaxPrefix + "get_nft_asset_class_list?addr=" + storage.getItem("addr0");
+
+    $.ajax(
+        {url: request, success: function(result) {
+            if (currentWindow.id == "winCreateNFT") {
+                var list = JSON.parse(result);
+                for (var i = 0; i < list.length; i++) {
+                    var request = ajaxPrefix + "get_nft_asset_class?hash=" + list[i];
+
+                    $.ajax(
+                        {url: request, success: function(result) {
+                            if (currentWindow.id == "winCreateNFT") {
+                                var assetClass = JSON.parse(result);
+                                var control = findControlByID("cmbSelectAssetClass");
+                                control.items.push(assetClass.metadata);
+                
+                            }
+                        }}
+                    );   
+                
+
+                }
+                var control = findControlByID("cmbSelectAssetClass");
+
+            }
+        }}
+    );   
+
+    
 
 }
 
