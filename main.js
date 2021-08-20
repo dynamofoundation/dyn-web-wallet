@@ -59,7 +59,6 @@ jQuery(onLoad);
 
 function onLoad() {
 
-  
 
     var action = null;
     var data = null;
@@ -1612,7 +1611,7 @@ function loadWindowLayout() {
         hambugerMenu: true,
         controls : [
             { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "Max Serial #:"},
-            { type : "textbox", id: "txtSerial", x : 600, y: 550, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
+            { type : "textbox", id: "txtMaxSerial", x : 600, y: 550, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
 
             { type : "label",  x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Metadata:"},
             { type : "textbox", id: "txtMeta", x : 600, y: 750, w: 1300, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
@@ -1621,7 +1620,11 @@ function loadWindowLayout() {
             { type : "textbox", id: "txtFee", x : 600, y: 950, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "0.0001" },
             { type : "label",  x : 1420, y: 1050, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
 
-            { type : "button", id: "cmdCreate", x: 1000, y: 1350, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
+            { type : "label", x : 1000, y: 1280, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to confirm."},
+            { type : "textbox", id: "txtPassword", x : 1000, y: 1350, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
+
+            { type : "button", id: "cmdCreate", x: 1000, y: 1550, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
 
@@ -1759,18 +1762,56 @@ function winCreateNFTClass_cmdCreate_click() {
         return;
     }
 
+    var txtMetaData = findControlByID("txtMeta");
+
+    var owner = window.localStorage.getItem("addr0");
+    
+    var nftHashLen = txtMetaData.value.length + 2 + 8;
+
+    var nftRawData = new Uint8Array(nftHashLen + owner.length);
+
+    nftRawData[0] = nftHashLen >> 8;
+    nftRawData[1] = nftHashLen & 0xFF;
+
+    var strMetaData = txtMetaData.value;
+    var bMeta = Buffer.Buffer.from(strMetaData, "utf8");
+    nftRawData.set(bMeta, 2);
+
+    const view = new DataView(nftRawData.buffer);
+    const biMaxSerial = BigInt(iMaxSerial);
+    view.setBigUint64(txtMetaData.value.length + 2, biMaxSerial);
+
+    var ownerArray = new TextEncoder("utf-8").encode(owner);    
+    nftRawData.set(ownerArray, nftHashLen);
+
+    var hash = CryptoJS.SHA256(nftRawData);
+
+    var bHash = Buffer.Buffer.from(hash.toString(CryptoJS.enc.Hex), 'hex');
 
 
-    var request = ajaxPrefix + "create_nft_class?hash=" + list[i];
+    var opReturnArray = Buffer.Buffer.from("7770", "utf8");        //opcode to create NFT asset class
+    opReturnArray = Buffer.Buffer.concat([opReturnArray, bHash]);
 
-    $.ajax(
-        {url: request, success: function(result) {
-            
-        }}
-    );       
+    globalVars.sendAmt = 10000;
+    globalVars.sendFee = 10000;
+    globalVars.sendAddr = owner;
+    globalVars.opReturn = opReturnArray;    
+
+    submitTransaction();
+
+}
 
 
 
+function asciiToHex(str)
+ {
+	var arr1 = [];
+	for (var n = 0, l = str.length; n < l; n ++) 
+    {
+	    var hex = Number(str.charCodeAt(n)).toString(16);
+		arr1.push(hex);
+    }
+	return arr1.join('');
 }
 
 
@@ -2212,14 +2253,16 @@ function winSend_cmdSend_click() {
     globalVars.sendAmt = iAmt;
     globalVars.sendFee = iFee;
     globalVars.sendAddr = addr.value;
-
+    globalVars.opReturn = null;
 
 }
 
 
 function winSendConfirm_cmdSend_click() {
+    submitTransaction();
+}
 
-
+function submitTransaction() {
 
     var fromAddr = window.localStorage.getItem("addr0");
     var request = ajaxPrefix + "get_utxo?addr=" + fromAddr + "&amount=" + (globalVars.sendAmt + globalVars.sendFee);
@@ -2244,7 +2287,7 @@ function winSendConfirm_cmdSend_click() {
             var password = txtPassword.value;
 
             try {
-                sendCoins ( globalVars.sendAddr, globalVars.sendAmt, globalVars.sendFee, utxoSet, password);
+                sendCoins ( globalVars.sendAddr, globalVars.sendAmt, globalVars.sendFee, utxoSet, password, globalVars.opReturn);
             }
             catch (ex) {
                 Msgbox("Error", "Error creating transaction");
@@ -2305,10 +2348,11 @@ function mainMenu_click_createNFT() {
                     $.ajax(
                         {url: request, success: function(result) {
                             if (currentWindow.id == "winCreateNFT") {
-                                var assetClass = JSON.parse(result);
-                                var control = findControlByID("cmbSelectAssetClass");
-                                control.items.push(assetClass.metadata);
-                
+                                if (result != "error") {
+                                    var assetClass = JSON.parse(result);
+                                    var control = findControlByID("cmbSelectAssetClass");
+                                    control.items.push(assetClass.metadata);
+                                }
                             }
                         }}
                     );   
@@ -2642,7 +2686,7 @@ function setupWallet() {
 
 
 
-function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
+function sendCoins ( destAddr, amount, fee, utxoSet, password, opReturnData = null ) {
 
     var network = DynWallet.bitcoin.networks.bitcoin;
 
@@ -2671,6 +2715,14 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
         if (changeAmt > 0)
             psbt.addOutput ( {address: changeAddr, value : changeAmt});
 
+        if (opReturnData != null) {
+            const embed = DynWallet.bitcoin.payments.embed({data: [opReturnData]})
+            psbt.addOutput({
+              script: embed.output,
+              value: 0,
+            });
+        }
+        
         for ( var i = 0; i < utxoSet.length; i++ ) {
             psbt.addInput ( {
                 hash: utxoSet[i].txID,
@@ -2691,11 +2743,18 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password ) {
         psbt.finalizeAllInputs();
         const tx = psbt.extractTransaction();
         var strHexTransaction = tx.toHex();
+        var len = strHexTransaction.length;
 
-        var request = ajaxPrefix + "send_tx?hex=" + strHexTransaction;
+        //var request = ajaxPrefix + "send_tx?hex=" + strHexTransaction;
+        var request = ajaxPrefix + "send_tx";
 
         $.ajax(
-            {url: request, success: function(result) {
+            {url: request, 
+            method: "POST",
+            data : {
+                transaction: strHexTransaction
+            },
+            success: function(result) {
                 if (result.length == 64)
                     Msgbox ("Completion", "Your transaction was submitted.", "mainMenu_click_Send");
                 else
