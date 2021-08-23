@@ -2543,7 +2543,6 @@ function winCreateNFT_cmdCreate_click() {
     dataToHash.set (nftRawData, 0);
     dataToHash.set (bAssetClass, nftHashLen);
 
-
     var hash = CryptoJS.SHA256(dataToHash);
     var bHash = Buffer.Buffer.from(hash.toString(CryptoJS.enc.Hex), 'hex');
 
