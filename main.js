@@ -1849,9 +1849,9 @@ function winCreateNFTClass_cmdCreate_click() {
 
     var ownerArray = new TextEncoder("utf-8").encode(owner);    
 
-    var bFinalData = new Uint8Array(bhash.length + ownerArray.length);
-    bFinalData.set(bhash, 0);
-    bFinalData.set(ownerArray, bhash.length);
+    var bFinalData = new Uint8Array(bHash.length + ownerArray.length);
+    bFinalData.set(bHash, 0);
+    bFinalData.set(ownerArray, bHash.length);
 
     var finalHash = CryptoJS.SHA256(bFinalData);
     var bFinalHash = Buffer.Buffer.from(finalHash.toString(CryptoJS.enc.Hex), 'hex');
