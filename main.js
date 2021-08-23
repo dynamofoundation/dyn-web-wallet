@@ -1650,7 +1650,11 @@ function loadWindowLayout() {
             { type : "textbox", id: "txtFee", x : 500, y: 1250, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "0.0001" },
             { type : "label",  x : 1320, y: 1350, fontsize : "80", fontcolor : "white", align : "left", text : "DYN"},
 
-            { type : "button", id: "cmdCreate", x: 1000, y: 1550, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
+            { type : "label", x : 1000, y: 1510, fontsize : "80", fontcolor : "white", align : "center", text : "Enter your password to confirm"},
+            { type : "textbox", id: "txtPassword", x : 1000, y: 1550, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
+
+            { type : "button", id: "cmdCreate", x: 1000, y: 1750, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
 
@@ -2450,7 +2454,7 @@ function mainMenu_click_createNFT() {
                                     var entry = new Object();
                                     entry.text = assetClass.metaData;
                                     entry.value = assetClass.hash;
-                                    control.items.push(assetClass.metaData);
+                                    control.items.push(entry);
                                 }
                             }
                         }}
@@ -2485,14 +2489,15 @@ function winCreateNFT_cmdCreate_click() {
         }
     }
 
-    var iFee = parseInt(findControlByID("txtFee").value);
+    var strFee = parseDecimal(findControlByID("txtFee").value);
+    var iFee = parseInt(strFee);    
 
     if (iFee <= 0) {
         Msgbox("Validation", "Fee must be greater than zero");
         return;
     }
 
-    var cmbAssetClass = findControlByID("cmbAssetClass").value;
+    var cmbAssetClass = findControlByID("cmbSelectAssetClass");
     if (cmbAssetClass.selectedItem == -1) {
         Msgbox("Validation", "Please select an asset class");
         return;
@@ -2544,9 +2549,9 @@ function winCreateNFT_cmdCreate_click() {
 
     var ownerArray = new TextEncoder("utf-8").encode(owner);    
 
-    var bFinalData = new Uint8Array(bhash.length + ownerArray.length);
-    bFinalData.set(bhash, 0);
-    bFinalData.set(ownerArray, bhash.length);
+    var bFinalData = new Uint8Array(bHash.length + ownerArray.length);
+    bFinalData.set(bHash, 0);
+    bFinalData.set(ownerArray, bHash.length);
 
     var finalHash = CryptoJS.SHA256(bFinalData);
     var bFinalHash = Buffer.Buffer.from(finalHash.toString(CryptoJS.enc.Hex), 'hex');
@@ -2592,7 +2597,7 @@ function submitNFTAsset( ) {
 
         }}
     );    
-    
+
 }
 
 
