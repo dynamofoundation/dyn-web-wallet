@@ -237,8 +237,21 @@ function processClickEvent ( x, y ) {
     }
 
     var control = null;
-    if (!virtKeyClicked)
-        control = findControlByXY ( px, py );
+    if (!virtKeyClicked) {
+
+        //if a combo box is expanded, check them first as they may overlay other controls
+        var anyComboExpanded = false;
+        for (var i = 0; i < currentWindow.controls.length; i++)
+            if (currentWindow.controls[i].type == "combo")
+                if (currentWindow.controls[i].expanded)
+                    anyComboExpanded = true;
+        
+        if (anyComboExpanded)
+            control = findControlByXY ( px, py, "combo" );
+
+        if (control == null)
+            control = findControlByXY ( px, py );
+    }
 
     //if no control clicked, check the virtual keyboard expander
     if (control == null) {
@@ -264,7 +277,8 @@ function processClickEvent ( x, y ) {
             processDrawingClick(control, px, py);
         }
         else if (control.type == "combo") {
-                currentWindow.focus = control.id;
+            currentWindow.focus = control.id;
+            processComboClick(control, px, py);
         }
     }
 
@@ -291,20 +305,20 @@ function findControlByID ( id ) {
 
 }
 
-function findControlByXY (x, y) {
+function findControlByXY (x, y, filter = "any") {
 
     var found = false;
     var i = 0;
     while ((!found) && (i < currentWindow.controls.length)) {
         var control = currentWindow.controls[i];
 
-        if (control.type == "textbox")
+        if ((control.type == "textbox") && ((control.type == filter) || (filter == "any")))
             found = pointInTextbox (x, y, control);
-        else if (control.type == "button")
+        else if ((control.type == "button") && ((control.type == filter) || (filter == "any")))
             found = pointInButton (x, y, control);
-        else if (control.type == "drawing")
+        else if ((control.type == "drawing") && ((control.type == filter) || (filter == "any")))
             found = pointInDrawing (x, y, control);
-        else if (control.type == "combo")
+        else if ((control.type == "combo") && ((control.type == filter) || (filter == "any")))
             found = pointInCombo (x, y, control);
 
         if (!found)
@@ -691,7 +705,7 @@ function drawCombo ( control ) {
         mainContext.font = control.fontsize + 'px ' + globalFont;
         mainContext.fillStyle = control.fontcolor;
         mainContext.textAlign = "left";
-        mainContext.fillText ( control.items[control.selectedItem], x + control.texthorizoffset, control.y + control.textvertoffset );        
+        mainContext.fillText ( control.items[control.selectedItem].text.substring(0,22), x + 20, control.y + 80 );        
     }
 
 
@@ -714,18 +728,60 @@ function drawCombo ( control ) {
     mainContext.fillStyle = "#101010";
     mainContext.fill();
 
+    //selectedItem : -1, expanded: false, items: []
+
+
+    if (control.expanded) {
+        mainContext.strokeStyle = "rgb(0, 0, 0)";
+        mainContext.lineWidth = 10;
+        mainContext.fillStyle = "rgb(200, 200, 200)";
+        roundRect(mainContext, x, control.y + control.h, control.w, control.h * 4, 30, true, true);      
+        
+        var start = 0;
+        if (control.selectedItem != -1)
+            start = control.selectedItem;
+        for ( var i = 0; i < 4; i++)
+            if (start + i < control.items.length) {
+                mainContext.font = control.fontsize + 'px ' + globalFont;
+                mainContext.fillStyle = control.fontcolor;
+                mainContext.textAlign = "left";
+                mainContext.fillText ( control.items[start + i].text.substring(0,22), x + 20, control.y + 80 + control.h + control.h * i );        
+            }
+
+        
+    }
 
 }
 
 
 function pointInCombo ( x, y, control ) {
-    if (!control.expanded) {
-        if (control.align == "center")
-            return pointInRect ( x, y, control.x - control.w / 2, control.y, control.w, control.h);
-        else
+    if (!control.expanded) 
         return pointInRect ( x, y, control.x, control.y, control.w, control.h);
-    }
+    else 
+        return pointInRect ( x, y, control.x, control.y, control.w, control.h * 5);
 }
+
+
+function processComboClick(control, px, py) {
+
+    var x = control.x;
+    var y = control.y;
+    var w = control.w;
+    var h = control.h;
+    if (pointInRect(px, py, x + w - 100, y + 10, 100,  80)) {
+        control.expanded = !control.expanded;
+    }
+    else {
+        var line = Math.floor((py - y - h) / h);
+        if ((line >= 0) && (line < 4))
+            if (line < control.items.length) {
+                control.selectedItem = line;
+                control.expanded = false;
+            }
+    }
+
+}
+
 
 
 ////////////////////////   Button
@@ -1578,7 +1634,6 @@ function loadWindowLayout() {
         hambugerMenu: true,
         controls : [
             { type : "label", x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Asset Class"},
-            { type : "combo", id: "cmbSelectAssetClass", x : 600, y: 370, w: 800, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : 0, expanded: false, items: []},
             { type : "button", id: "cmdNewAssetClass", x: 1700, y: 370, w: 300, h: 120, fontsize: 80, fontcolor: "black", textvertoffset: 25, caption: "New"},
 
             { type : "label",  x : 100, y: 650, fontsize : "80", fontcolor : "white", align : "left", text : "Serial #:"},
@@ -1598,6 +1653,8 @@ function loadWindowLayout() {
             { type : "button", id: "cmdCreate", x: 1000, y: 1550, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Create"},
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
+
+            { type : "combo", id: "cmbSelectAssetClass", x : 600, y: 370, w: 800, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : -1, expanded: false, items: []},
 
         ]
     };
@@ -1768,10 +1825,12 @@ function winCreateNFTClass_cmdCreate_click() {
     
     var nftHashLen = txtMetaData.value.length + 2 + 8;
 
-    var nftRawData = new Uint8Array(nftHashLen + owner.length);
+    var nftRawData = new Uint8Array(nftHashLen);
 
-    nftRawData[0] = nftHashLen >> 8;
-    nftRawData[1] = nftHashLen & 0xFF;
+    var metaDataLen = txtMetaData.value.length;
+
+    nftRawData[0] = metaDataLen >> 8;
+    nftRawData[1] = metaDataLen & 0xFF;
 
     var strMetaData = txtMetaData.value;
     var bMeta = Buffer.Buffer.from(strMetaData, "utf8");
@@ -1781,23 +1840,57 @@ function winCreateNFTClass_cmdCreate_click() {
     const biMaxSerial = BigInt(iMaxSerial);
     view.setBigUint64(txtMetaData.value.length + 2, biMaxSerial);
 
-    var ownerArray = new TextEncoder("utf-8").encode(owner);    
-    nftRawData.set(ownerArray, nftHashLen);
-
     var hash = CryptoJS.SHA256(nftRawData);
-
     var bHash = Buffer.Buffer.from(hash.toString(CryptoJS.enc.Hex), 'hex');
 
+    var ownerArray = new TextEncoder("utf-8").encode(owner);    
+
+    var bFinalData = new Uint8Array(bhash.length + ownerArray.length);
+    bFinalData.set(bhash, 0);
+    bFinalData.set(ownerArray, bhash.length);
+
+    var finalHash = CryptoJS.SHA256(bFinalData);
+    var bFinalHash = Buffer.Buffer.from(finalHash.toString(CryptoJS.enc.Hex), 'hex');
 
     var opReturnArray = Buffer.Buffer.from("7770", "utf8");        //opcode to create NFT asset class
-    opReturnArray = Buffer.Buffer.concat([opReturnArray, bHash]);
+    opReturnArray = Buffer.Buffer.concat([opReturnArray, bFinalHash]);
 
     globalVars.sendAmt = 10000;
     globalVars.sendFee = 10000;
     globalVars.sendAddr = owner;
     globalVars.opReturn = opReturnArray;    
+    globalVars.nftRawData = Buffer.Buffer.from(nftRawData).toString('hex');
 
-    submitTransaction();
+    submitTransaction("submitNFTAssetClass");
+
+}
+
+function submitNFTAssetClass() {
+
+    var command = "add-class";
+    var owner = window.localStorage.getItem("addr0");
+    var txid = globalVars.lastTXid;
+    var hexRawData = globalVars.nftRawData;
+
+    var request = ajaxPrefix + "submit_nft?command=" + command + "&ownerAddr=" + owner + "&txID=" + txid;
+
+    $.ajax(
+        {url: request, 
+        method: "POST",
+        data : {
+            hexData: hexRawData
+        },
+        success: function(result) {
+            if (result.length == 64) {
+                Msgbox("Complete","NFT asset class submitted","mainMenu_click_createNFT");
+
+            }
+            else
+                Msgbox ("Error", result, "mainMenu_click_createNFT");
+
+        }}
+    );    
+
 
 }
 
@@ -2259,13 +2352,15 @@ function winSend_cmdSend_click() {
 
 
 function winSendConfirm_cmdSend_click() {
-    submitTransaction();
+    submitTransaction("mainMenu_click_Send");
 }
 
-function submitTransaction() {
+function submitTransaction(callbackFunction) {
 
     var fromAddr = window.localStorage.getItem("addr0");
     var request = ajaxPrefix + "get_utxo?addr=" + fromAddr + "&amount=" + (globalVars.sendAmt + globalVars.sendFee);
+
+    globalVars.sendCoinsCallback = callbackFunction;
 
     $.ajax(
         {url: request, success: function(result) {
@@ -2316,6 +2411,7 @@ function mainMenu_click_Transactions() {
 
 function mainMenu_click_createNFT() {
     imageUploadArrayValid = false;
+    imageUploadArray = new Int8Array();
 
     var control = findControlByID("cmbSelectAssetClass");
     control.selectedItem = -1;
@@ -2349,9 +2445,12 @@ function mainMenu_click_createNFT() {
                         {url: request, success: function(result) {
                             if (currentWindow.id == "winCreateNFT") {
                                 if (result != "error") {
-                                    var assetClass = JSON.parse(result);
+                                    var assetClass = decodeAssetClass ( result );
                                     var control = findControlByID("cmbSelectAssetClass");
-                                    control.items.push(assetClass.metadata);
+                                    var entry = new Object();
+                                    entry.text = assetClass.metaData;
+                                    entry.value = assetClass.hash;
+                                    control.items.push(assetClass.metaData);
                                 }
                             }
                         }}
@@ -2380,7 +2479,7 @@ function winCreateNFT_cmdCreate_click() {
     }
 
     if (imageUploadArrayValid) {
-        if (imageUploadArray.length > 16,777,215) {
+        if (imageUploadArray.length > 16777215) {
             Msgbox("Validation", "Max binary size of 16mb");
             return;    
         }
@@ -2393,7 +2492,107 @@ function winCreateNFT_cmdCreate_click() {
         return;
     }
 
+    var cmbAssetClass = findControlByID("cmbAssetClass").value;
+    if (cmbAssetClass.selectedItem == -1) {
+        Msgbox("Validation", "Please select an asset class");
+        return;
+    }
 
+
+    var txtMetaData = findControlByID("txtMeta");
+
+    var owner = window.localStorage.getItem("addr0");
+    
+    var assetClassHash = cmbAssetClass.items[cmbAssetClass.selectedItem].value;
+
+    var bAssetClass = Buffer.Buffer.from(assetClassHash, 'hex');
+
+    //2 for metadata length
+    //3 for binary length
+    //8 for serial
+    //length of binary data, if any
+    var nftHashLen = txtMetaData.value.length + 2 + 8 + 3 + imageUploadArray.length;
+
+    var nftRawData = new Uint8Array(nftHashLen);
+
+    var metaDataLen = txtMetaData.value.length;
+    nftRawData[0] = metaDataLen >> 8;
+    nftRawData[1] = metaDataLen & 0xFF;
+
+    var strMetaData = txtMetaData.value;
+    var bMeta = Buffer.Buffer.from(strMetaData, "utf8");
+    nftRawData.set(bMeta, 2);
+
+    var binaryLen = imageUploadArray.length;
+    nftRawData[metaDataLen + 2] = binaryLen >> 16;
+    nftRawData[metaDataLen + 2 + 1] = (binaryLen & 0xFF00) >> 8;
+    nftRawData[metaDataLen + 2 + 2] = (binaryLen & 0x0000FF);
+
+    nftRawData.set(imageUploadArray, metaDataLen + 2 + 3);
+
+    const view = new DataView(nftRawData.buffer);
+    const biSerial = BigInt(iSerial);
+    view.setBigUint64(metaDataLen + 2 + 3 + binaryLen, biSerial);
+
+    var dataToHash = new Uint8Array(nftHashLen + 32);
+    dataToHash.set (nftRawData, 0);
+    dataToHash.set (bAssetClass, nftHashLen);
+
+
+    var hash = CryptoJS.SHA256(dataToHash);
+    var bHash = Buffer.Buffer.from(hash.toString(CryptoJS.enc.Hex), 'hex');
+
+    var ownerArray = new TextEncoder("utf-8").encode(owner);    
+
+    var bFinalData = new Uint8Array(bhash.length + ownerArray.length);
+    bFinalData.set(bhash, 0);
+    bFinalData.set(ownerArray, bhash.length);
+
+    var finalHash = CryptoJS.SHA256(bFinalData);
+    var bFinalHash = Buffer.Buffer.from(finalHash.toString(CryptoJS.enc.Hex), 'hex');
+
+    var opReturnArray = Buffer.Buffer.from("7771", "utf8");        //opcode to create NFT asset class
+    opReturnArray = Buffer.Buffer.concat([opReturnArray, bFinalHash]);
+
+    globalVars.sendAmt = 10000;
+    globalVars.sendFee = 10000;
+    globalVars.sendAddr = owner;
+    globalVars.opReturn = opReturnArray;    
+    globalVars.nftRawData = Buffer.Buffer.from(nftRawData).toString('hex');
+    globalVars.nftAssetClass = assetClassHash;
+
+    submitTransaction("submitNFTAsset");    
+
+}
+
+
+function submitNFTAsset( ) {
+
+    var command = "add-asset";
+    var owner = window.localStorage.getItem("addr0");
+    var txid = globalVars.lastTXid;
+    var hexRawData = globalVars.nftRawData;
+    var assetClass = globalVars.nftAssetClass;
+
+    var request = ajaxPrefix + "submit_nft?command=" + command + "&ownerAddr=" + owner + "&txID=" + txid + "&assetClass=" + assetClass;
+
+    $.ajax(
+        {url: request, 
+        method: "POST",
+        data : {
+            hexData: hexRawData
+        },
+        success: function(result) {
+            if (result.length == 64) {
+                Msgbox("Complete","NFT asset submitted","mainMenu_click_createNFT");
+
+            }
+            else
+                Msgbox ("Error", result, "mainMenu_click_createNFT");
+
+        }}
+    );    
+    
 }
 
 
@@ -2745,7 +2944,6 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password, opReturnData = nu
         var strHexTransaction = tx.toHex();
         var len = strHexTransaction.length;
 
-        //var request = ajaxPrefix + "send_tx?hex=" + strHexTransaction;
         var request = ajaxPrefix + "send_tx";
 
         $.ajax(
@@ -2755,10 +2953,12 @@ function sendCoins ( destAddr, amount, fee, utxoSet, password, opReturnData = nu
                 transaction: strHexTransaction
             },
             success: function(result) {
-                if (result.length == 64)
-                    Msgbox ("Completion", "Your transaction was submitted.", "mainMenu_click_Send");
+                if (result.length == 64) {
+                    globalVars.lastTXid = result;
+                    Msgbox ("Completion", "Your transaction was submitted.", globalVars.sendCoinsCallback);
+                }
                 else
-                    Msgbox ("Error", result, "mainMenu_click_Send");
+                    Msgbox ("Error", result, globalVars.sendCoinsCallback);
 
             }}
         );
@@ -2857,3 +3057,60 @@ function decryptAES256 (transitmessage, pass) {
   return decrypted;
 }
 
+
+function nftReadInt64(bytes, ptr) {
+    var result = 0;
+
+    result += bytes[ptr.ptr] << 56;
+    result += bytes[ptr.ptr + 1] << 48;
+    result += bytes[ptr.ptr + 2] << 40;
+    result += bytes[ptr.ptr + 3] << 32;
+    result += bytes[ptr.ptr + 4] << 24;
+    result += bytes[ptr.ptr + 5] << 16;
+    result += bytes[ptr.ptr + 6] << 8;
+    result += bytes[ptr.ptr + 7];
+
+    ptr.ptr += 8;
+
+    return result;
+}
+
+
+function nftReadInt32(bytes, ptr) {
+    var result = 0;
+
+    result += bytes[ptr.ptr] << 24;
+    result += bytes[ptr.ptr + 1] << 16;
+    result += bytes[ptr.ptr + 2] << 8;
+    result += bytes[ptr.ptr + 3];
+
+    ptr.ptr += 4;
+
+    return result;
+}
+
+function nftReadString(bytes, ptr) {
+    var len = nftReadInt32(bytes, ptr);
+    var result = "";
+    for ( var i = 0; i < len; i++)
+        result = result + String.fromCharCode(bytes[ptr.ptr + i]);
+    ptr.ptr += len;
+    return result;
+}
+
+function decodeAssetClass ( hexStr ) {
+
+    var bytes = Uint8Array.from(Buffer.Buffer.from(hexStr, 'hex'));
+
+    var result = new Object();
+    var ptr = new Object();
+    ptr.ptr = 0;
+    result.hash = nftReadString(bytes, ptr);
+    result.metaData = nftReadString(bytes, ptr);
+    result.owner = nftReadString(bytes, ptr);
+    result.txID = nftReadString(bytes, ptr);
+    result.maxSerial = nftReadInt64(bytes, ptr);
+
+    return result;
+
+}

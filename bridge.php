@@ -13,6 +13,11 @@
             curl_setopt($ch, CURLOPT_POSTFIELDS,"transaction=" . $_POST['transaction']);
         }
 
+        if (isset($_POST['hexData'])) {
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS,"hexData=" . $_POST['hexData']);
+        }
+
         //return the transfer as a string
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
