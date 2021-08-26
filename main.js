@@ -59,7 +59,6 @@ jQuery(onLoad);
 
 function onLoad() {
 
-
     var action = null;
     var data = null;
 
@@ -1801,8 +1800,53 @@ function loadWindowLayout() {
         id: "winPlayToEarn",
         hambugerMenu: true,
         controls : [
+            { type : "button", id: "cmdDownloadGame", x: 550, y: 400, w: 850, h: 150, fontsize: 96, fontcolor: "black", align: "left", textvertoffset: 30, caption: "Download game"},
+
+            { type : "label", x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Enter password:"},
+            { type : "textbox", id: "txtPassword", x : 1200, y: 750, w: 800, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
+
+            { type : "label",  x : 100, y: 1075, fontsize : "80", fontcolor : "white", align : "left", text : "Enter your login code below"},
+            { type : "textbox", id: "txtCode", x : 100, y: 1150, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "left",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+            { type : "button", id: "cmdSignMessage", x: 1200, y: 1150, w: 1200, h: 150, fontsize: 96, fontcolor: "black", align: "left", textvertoffset: 25, caption: "Copy signature to clipboard"},
+
         ]
     };    
+
+
+}
+
+function winPlayToEarn_cmdDownloadGame_click() {
+    window.open("https://dynamocoin.itch.io/dynammo");
+}
+
+function winPlayToEarn_cmdSignMessage_click() {
+
+    var message = findControlByID("txtCode").value;
+    var password = findControlByID("txtPassword").value;
+
+    var masterKey = decryptXPRV(password);
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    var root = DynWallet.bip32.fromBase58(masterKey, network);
+    var child = root.derivePath("m/0'/0'/0'");
+
+    var signature = Message.sign(message, child.privateKey, child.compressed, { segwitType: 'p2wpkh' });
+
+    var textArea = document.getElementById("txtClipboard");
+    textArea.value = signature.toString('base64');
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        if (successful)
+            Msgbox("Confirm", "Signature copied");
+        else
+            Msgbox("Failed", "Signature could not be copied to clipboard");
+    } catch (err) {
+        Msgbox("Failed", "Signature could not be copied to clipboard");
+    }    
 
 
 }
