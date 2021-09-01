@@ -762,8 +762,10 @@ function drawCombo ( control ) {
         roundRect(mainContext, x, control.y + control.h, control.w, control.h * control.dropSize, 30, true, true);      
         
         var start = 0;
+        /*
         if (control.selectedItem != -1)
             start = control.selectedItem;
+            */
         for ( var i = 0; i < control.dropSize; i++)
             if (start + i < control.items.length) {
                 mainContext.font = control.fontsize + 'px ' + globalFont;
@@ -801,6 +803,9 @@ function processComboClick(control, px, py) {
             if (line < control.items.length) {
                 control.selectedItem = line;
                 control.expanded = false;
+                if (control.onSelect.length > 0) {
+                    window[control.onSelect]();
+                }
             }
     }
 
@@ -1689,7 +1694,7 @@ function loadWindowLayout() {
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
 
-            { type : "combo", id: "cmbSelectAssetClass", x : 600, y: 370, w: 800, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : -1, expanded: false, items: [], maxTextLen: 22, dropSize: 10},
+            { type : "combo", id: "cmbSelectAssetClass", onSelect: "", x : 600, y: 370, w: 800, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : -1, expanded: false, items: [], maxTextLen: 22, dropSize: 10},
 
         ]
     };
@@ -1844,7 +1849,7 @@ function loadWindowLayout() {
 
             { type : "button", id: "cmdXfer", x: 1000, y: 1850, w: 400, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Transfer"},
 
-            { type : "combo", id: "cmbSourceAcct", x : 100, y: 650, w: 1800, h: 120, fontsize : "64", color: "white", fontcolor : "black", align : "left", selectedItem : 0, expanded: false, items: [ ],  maxTextLen: 65, dropSize: 10},
+            { type : "combo", id: "cmbSourceAcct", onSelect: "winUtility_cmbSourceAcct_select", x : 100, y: 650, w: 1800, h: 120, fontsize : "64", color: "white", fontcolor : "black", align : "left", selectedItem : 0, expanded: false, items: [ ],  maxTextLen: 65, dropSize: 10},
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
         ]
@@ -1913,7 +1918,7 @@ function loadWindowLayout() {
 
 
 
-            { type : "combo", id: "cmbSwapAction", x : 100, y: 650, w: 1200, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : 0, expanded: false, items: [ { text :"Send DYN, receive WDYN"}, { text : "Send WDYN, receive DYN"} ], dropSize: 2 },
+            { type : "combo", id: "cmbSwapAction", onSelect: "", x : 100, y: 650, w: 1200, h: 120, fontsize : "80", color: "white", fontcolor : "black", align : "left", selectedItem : 0, expanded: false, items: [ { text :"Send DYN, receive WDYN"}, { text : "Send WDYN, receive DYN"} ], dropSize: 2 },
 
 
             { type: "keyboard", id: "keyboard", mode: 0, shift: false },
@@ -1938,6 +1943,32 @@ function mainMenu_click_utility() {
         o.text = storage.getItem("addr" + i);
         cmbSource.items.push(o);
     }
+
+
+}
+
+function winUtility_cmbSourceAcct_select() {
+
+    var cmbSource = findControlByID("cmbSourceAcct");
+    var storage = window.localStorage;
+    var acct = storage.getItem("addr" + cmbSource.selectedItem);
+
+    var request = ajaxPrefix + "get_balance?addr=" + acct;
+
+    $.ajax(
+        {url: request, success: function(result) {
+            if (currentWindow.id == "winUtility") {
+                while (result.length < 8)
+                    result = "0" + result;
+                if (result.length == 8)
+                    result = "0." + result;
+                else
+                    result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
+                var control = findControlByID("txtAmount");
+                control.value =  result;
+            }
+        }}
+    );     
 
 
 }
