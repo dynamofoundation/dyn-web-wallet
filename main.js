@@ -577,6 +577,9 @@ function processClickMenu (px, py) {
         else if (windows[i] == "utility")
             mainMenu_click_utility();
 
+        else if (windows[i] == "swaptoken")
+            mainMenu_click_swap();
+
     }
 
 }
@@ -1903,7 +1906,7 @@ function loadWindowLayout() {
 
 
             { type : "label",  x : 100, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "Enter BSC wallet address:"},
-            { type : "textbox", id: "txtMeta", x : 100, y: 970, w: 1800, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
+            { type : "textbox", id: "txtBSCWallet", x : 100, y: 970, w: 1800, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
 
             { type : "label",  x : 100, y: 1300, fontsize : "80", fontcolor : "white", align : "left", text : "Amount:"},
             { type : "textbox", id: "txtAmount", x : 500, y: 1200, w: 800, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: true, value: "" },
@@ -1929,6 +1932,7 @@ function loadWindowLayout() {
 
 
 }
+
 
 
 
@@ -2097,22 +2101,88 @@ function winSummary_cmdPlay_click() {
 }
 
 function winSummary_cmdSwap_click() {
+    //todo - clear old values
+    Msgbox("Warning","This is an experimental feature.  Please only swap small amounts.");
     currentWindow = windowLayout["swaptoken"];
+}
+
+function mainMenu_click_swap() {
+    //todo - clear old values
+    Msgbox("Warning","This is an experimental feature.  Please only swap small amounts.");
 }
 
 
 function winSwapToken_cmdSwap_click() {
     
     var control = findControlByID("cmbSwapAction");
-    if (control.selectedItem == 0)    
-        Msgbox("Swap","Transaction submitted");
+
+    var walletAddr = findControlByID("txtBSCWallet").value;
+    var amount =  findControlByID("txtAmount").value;
+    var password = findControlByID("txtPassword").value;
+
+    if (walletAddr.substring(0,2) != "0x") {
+        Msgbox("Error","BSC address must start with 0x");
+        return;
+    }
+    if (walletAddr.length != 42) {
+        Msgbox("Error","BSC address must be 42 characters long");
+        return;
+    }
+
+
+    var strAmt = parseDecimal(amount);
+    var iAmt = parseInt(strAmt);   
+    globalVars.sendAmt = iAmt;
+
+    if (iAmt <= 0) {
+        Msgbox("Error","Amount must be greater than zero");
+        return;
+    }
+    
+    var formattedAmt = strAmt;
+    while (formattedAmt.length < 8)
+    formattedAmt = "0" + formattedAmt;
+    if (formattedAmt.length == 8)
+        formattedAmt = "0." + formattedAmt;
     else
-        Msgbox("Swap","Please send 1.532 WDYN to 0x40EDc8dc6cBeca2747f5B1EdFE88Fde9A71429e0 within the next 5 minutes.", "", 1800, "Copy BSC address", "copyBSCAddress");
+        formattedAmt = formattedAmt.substring(0, formattedAmt.length-8) + "." + formattedAmt.substring(formattedAmt.length-8);
+
+    var swapAction;
+    if (control.selectedItem == 0)
+        swapAction = "dyn_to_wdyn";
+    else
+        swapAction = "wdyn_to_dyn";
+
+    var request = ajaxPrefix + "submit_swap?dyn_addr=" + window.localStorage.getItem("addr0") + "&wdyn_addr=" + walletAddr + "&amt=" + iAmt + "&action=" + swapAction;
+
+    $.ajax(
+        {url: request, 
+        method: "GET",
+        success: function(result) {
+            if (result == "error") {
+                Msgbox ("Error", "Cannot process swap");
+            }
+            else {
+                var transactionID = parseInt(result);
+                if (control.selectedItem == 0) {
+                    globalVars.sendFee = 10000;
+                    globalVars.sendAddr = "dy1qm5rf4suzfplu9dwtzkmegt763akn0qcypyut5r";
+                    globalVars.opReturn = null;
+                    submitTransaction("winSummary_cmdSwap_click");                    
+                }
+                else
+                    Msgbox("Pending","Please send " + makeDecimal(iAmt) + " WDYN to 0x32f626a088b49bd5ffa3895fece48800f30fc5d3 within the next 5 minutes.", "", 1800, "Copy BSC address", "copyBSCAddress");            
+            }
+
+        }}
+    );            
+
+
 }
 
 function copyBSCAddress() {
     var textArea = document.getElementById("txtClipboard");
-    textArea.value = "0x40EDc8dc6cBeca2747f5B1EdFE88Fde9A71429e0";
+    textArea.value = "0x32f626a088b49bd5ffa3895fece48800f30fc5d3";
     textArea.focus();
     textArea.select();
 
