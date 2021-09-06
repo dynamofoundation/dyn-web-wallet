@@ -2168,10 +2168,10 @@ function winSwapToken_cmdSwap_click() {
                     globalVars.sendFee = 10000;
                     globalVars.sendAddr = "dy1qm5rf4suzfplu9dwtzkmegt763akn0qcypyut5r";
                     globalVars.opReturn = null;
-                    submitTransaction("winSummary_cmdSwap_click");                    
+                    submitTransaction("mainMenu_click_Summary");                    
                 }
                 else
-                    Msgbox("Pending","Please send " + makeDecimal(iAmt) + " WDYN to 0x32f626a088b49bd5ffa3895fece48800f30fc5d3 within the next 5 minutes.", "", 1800, "Copy BSC address", "copyBSCAddress");            
+                    Msgbox("Pending","Please send " + makeDecimal(iAmt) + " WDYN to 0x32f626a088b49bd5ffa3895fece48800f30fc5d3 within the next 5 minutes.", "mainMenu_click_Summary", 1800, "Copy BSC address", "copyBSCAddress");            
             }
 
         }}
@@ -2189,11 +2189,11 @@ function copyBSCAddress() {
     try {
         var successful = document.execCommand('copy');
         if (successful)
-            Msgbox("Confirm", "Link copied to clipboard");
+            Msgbox("Confirm", "Address copied to clipboard", "mainMenu_click_Summary");
         else
-            Msgbox("Failed", "Link could not be copied to clipboard");
+            Msgbox("Failed", "Address could not be copied to clipboard", "mainMenu_click_Summary");
     } catch (err) {
-        Msgbox("Failed", "Link could not be copied to clipboard");
+        Msgbox("Failed", "Address could not be copied to clipboard", "mainMenu_click_Summary");
     }    
 }
 
