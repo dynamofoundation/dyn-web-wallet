@@ -2831,6 +2831,7 @@ function submitTransaction(callbackFunction) {
 
 
 function mainMenu_click_Summary() {
+    currentWindow = windowLayout["summary"];
     loadSummary();
 }
 
