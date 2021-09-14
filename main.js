@@ -2819,6 +2819,7 @@ function submitTransaction(callbackFunction) {
             }
             catch (ex) {
                 Msgbox("Error", "Error creating transaction");
+                console.log(ex, ex.stack);
             }
 
             txtPassword.value = "";
