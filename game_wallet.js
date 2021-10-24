@@ -34,12 +34,16 @@ function onLoad() {
     else if (action == "send_coins")
         sendCoins ( data );
 
+    else if (action == "sign_message")
+        signMessage ( data );
 
 
 }
 
 
 function generateSeed (  randomSeed ) {
+
+
 
     var finalHash = CryptoJS.SHA256( randomSeed );            
 
@@ -51,7 +55,8 @@ function generateSeed (  randomSeed ) {
         hexFinalHash += hexStr;
     }    
 
-    const mnemonic = DynWallet.bip39.entropyToMnemonic(hexFinalHash);
+    //const mnemonic = DynWallet.bip39.entropyToMnemonic(hexFinalHash);
+    const mnemonic = DynWallet.bip39.generateMnemonic();
 
 
     var masterSeed = DynWallet.bip39.mnemonicToSeedSync(mnemonic);
@@ -221,4 +226,25 @@ function parseDecimal ( data ) {
     }
 
     return intPart + decPart;
+}
+
+
+function signMessage ( data ) {
+
+    var params = data.split("~");
+
+    var message = params[0];
+    var masterKey = params[1];
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    var root = DynWallet.bip32.fromBase58(masterKey, network);
+    var child = root.derivePath("m/0'/0'/0'");
+    var ecpair = DynWallet.bitcoin.ECPair.fromPublicKey(child.publicKey, { network: network });
+    var p2wpkh = DynWallet.bitcoin.payments.p2wpkh({ pubkey: ecpair.publicKey, network: network });
+    console.log(p2wpkh.address);
+
+    var signature = Message.sign(message, child.privateKey, child.compressed, { segwitType: 'p2wpkh' });
+
+    document.getElementById("data1").innerHTML = "$" + signature.toString('base64') + "$";
+
 }
