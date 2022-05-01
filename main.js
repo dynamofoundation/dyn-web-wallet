@@ -501,7 +501,7 @@ function drawMenu() {
         roundRect(mainContext, menuX, menuY + menuH, 1000, menuY + menuH + 1750, 10, true, true);
 
 
-        var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT", "Security", "Utility", "Buy NFT", "Token Swap"];
+        var menuItems = ["Summary", "Transactions", "Send", "Receive", "Create NFT", "Send NFT", "Search NFT", "Security", "Utility", "Vote", "Token Swap"];
 
         mainContext.strokeStyle = "rgb(0, 0, 0)";
         mainContext.lineWidth = 10;
@@ -558,7 +558,7 @@ function processClickMenu (px, py) {
             i++;
 
     if (found) {
-        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft", "security", "utility", "buynft", "swaptoken"];
+        var windows = ["summary", "transactions", "send", "receive", "createnft", "sendnft", "searchnft", "security", "utility", "vote", "swaptoken"];
         currentWindow = windowLayout[windows[i]];
         menuExpanded = false;
 
@@ -579,6 +579,9 @@ function processClickMenu (px, py) {
 
         else if (windows[i] == "swaptoken")
             mainMenu_click_swap();
+
+        else if (windows[i] == "vote")
+            mainMenu_click_vote();
 
     }
 
@@ -1859,14 +1862,29 @@ function loadWindowLayout() {
     };    
 
 
-    windowLayout['buynft'] = {
-        title: "Buy from NFT Marketplace",
+    windowLayout['vote'] = {
+        title: "Vote on proposal",
         focus: "",
         allowVirtKeyboard: false,
         keyboardVisible: false,
-        id: "winBuyNFT",
+        id: "winVote",
         hambugerMenu: true,
         controls : [
+            { type : "label", id: "address",  x : 100, y: 450, fontsize : "64", fontcolor : "white", align : "left", text : ""},
+            { type : "label", id: "balance",  x : 100, y: 550, fontsize : "80", fontcolor : "white", align : "left", text : ""},
+
+            { type : "label",  x : 100, y: 750, fontsize : "80", fontcolor : "white", align : "left", text : "TXID:"},
+            { type : "textbox", id: "txtTXID", x : 500, y: 650, w: 1400, h: 150, fontsize : "80", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: false, numberOnly: false, value: "" },
+
+            { type : "label",  x : 100, y: 950, fontsize : "80", fontcolor : "white", align : "left", text : "Vote:"},
+            { type : "textbox", id: "txtVote", x : 500, y: 850, w: 200, h: 150, fontsize : "58", align : "left", fontcolor : "black", texthorizoffset: 25, textvertoffset: 100, maxlen: 43, mask: false, numberOnly: false, value: "" },
+
+            { type : "label", x : 1000, y: 1200, fontsize : "80", fontcolor : "white", align : "center", text : "Enter password"},
+            { type : "textbox", id: "txtPassword", x : 1000, y: 1300, w: 400, h: 150, fontsize : "80", fontcolor : "black", align : "center",  texthorizoffset: 25, textvertoffset: 100, maxlen: 16, mask: true, numberOnly: false, value: "" },
+
+            { type : "button", id: "cmdVote", x: 1000, y: 1650, w: 350, h: 150, fontsize: 96, fontcolor: "black", textvertoffset: 25, caption: "Vote"},
+
+
         ]
     };    
 
@@ -2111,6 +2129,30 @@ function mainMenu_click_swap() {
     Msgbox("Warning","This is an experimental feature.  Please only swap small amounts.");
 }
 
+function mainMenu_click_vote() {
+
+    var control = findControlByID("address");
+    control.text = localStorage.getItem("addr0");
+
+    var request = ajaxPrefix + "get_balance?addr=" + control.text;
+
+    $.ajax(
+        {url: request, success: function(result) {
+            while (result.length < 8)
+                result = "0" + result;
+            if (result.length == 8)
+                result = "0." + result;
+            else
+                result = result.substring(0, result.length-8) + "." + result.substring(result.length-8);
+            var control = findControlByID("balance");
+            control.text = "Balance: " + result + " DYN";
+        }}
+    );   
+    
+    
+    
+}
+
 
 function winSwapToken_cmdSwap_click() {
     
@@ -2201,6 +2243,80 @@ function copyBSCAddress() {
 function winPlayToEarn_cmdDownloadGame_click() {
     window.open("https://dynamocoin.itch.io/dynammo");
 }
+
+
+
+
+function winVote_cmdVote_click() {
+
+    var txid = findControlByID("txtTXID").value;
+    var vote = findControlByID("txtVote").value;
+
+    var localStorage = window.localStorage;
+    var address = localStorage.getItem("addr0");
+
+    if (txid.length != 64) {
+        Msgbox("Error", "TXID must be 64 characters");
+        return;
+    }
+
+    if (vote.length != 2) {
+        Msgbox("Error", "Vote must be 2 characters");
+        return;
+    }
+
+
+    var message = "020000" + vote + txid + asciiToHex(address);
+    var password = findControlByID("txtPassword").value;
+
+    var masterKey = decryptXPRV(password);
+
+    var network = DynWallet.bitcoin.networks.bitcoin;
+    var root = DynWallet.bip32.fromBase58(masterKey, network);
+    var child = root.derivePath("m/0'/0'/0'");
+
+    var signature = Message.sign(message, child.privateKey, child.compressed, { segwitType: 'p2wpkh' }).toString('base64');
+    var hexSign = asciiToHex(signature);
+    message = message + hexSign;
+
+    var opReturnArray = Buffer.Buffer.from(message, "utf8"); 
+
+    globalVars.sendAmt = 10000;
+    globalVars.sendFee = 10000;
+    globalVars.sendAddr = address;
+    globalVars.opReturn = opReturnArray;       
+
+
+    submitTransaction("submitVoteCallback");
+
+}
+
+
+function submitVoteCallback() {
+    var txid = globalVars.lastTXid;    
+
+    Msgbox("","TXID of your vote: " + txid, "mainMenu_click_Summary", 1800, "Copy TXID", "copyVoteTXID");            
+
+}
+
+
+function copyVoteTXID() {
+    var textArea = document.getElementById("txtClipboard");
+    textArea.value = globalVars.lastTXid; 
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        if (successful)
+            Msgbox("Confirm", "TXID copied to clipboard", "mainMenu_click_Summary");
+        else
+            Msgbox("Failed", "TXID could not be copied to clipboard", "mainMenu_click_Summary");
+    } catch (err) {
+        Msgbox("Failed", "TXID could not be copied to clipboard", "mainMenu_click_Summary");
+    }      
+}
+
 
 function winPlayToEarn_cmdSignMessage_click() {
 
@@ -3224,14 +3340,6 @@ function loadSummary() {
 
     if (currentWindow.id == "winSummary")
         setTimeout(loadSummary, 5000);
-
-
-
-    /*
-    { type : "label", id: "address",  x : 100, y: 450, fontsize : "80", fontcolor : "white", align : "left", text : "Address: dy123456789abcdefg"},
-    { type : "label", id: "balance",  x : 100, y: 700, fontsize : "80", fontcolor : "white", align : "left", text : "Balance: 2.45000000 DYN"},
-    { type : "label", id: "unconfirmed", x : 100, y: 850, fontsize : "80", fontcolor : "white", align : "left", text : "Unconfirmed Balance: 0.30000000 DYN"},
-*/
 
 }
 
